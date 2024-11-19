@@ -20,9 +20,12 @@
 /* Configure GPIO                                                             */
 /*----------------------------------------------------------------------------*/
 
-// static uint8_t IOL_Page1_SeqValue[13] = {0x49, 0x49, 0x2b, 0x11, 0x8c, 0x88, 0xff, 0xff, 0x00, 0x04, 0x5e, 0x00, 0x00};
-static uint8_t IOL_Page1_SeqValue[13] = {0x0e, 0x0e, 0x2b, 0x11, 0x8c, 0x88, 0xff, 0xff, 0x00, 0x04, 0x5e, 0x00, 0x00};
+static uint8_t IOL_Page1_SeqValue[13] = {0x49, 0x49, 0x2b, 0x11, 0x8c, 0x88, 0xff, 0xff, 0x00, 0x04, 0x5e, 0x00, 0x00};
+uint8_t IOL_RX_CONTINUE_FLAG = 0;
+
+// static uint8_t IOL_Page1_SeqValue[13] = {0x0e, 0x0e, 0x2b, 0x11, 0x8c, 0x88, 0xff, 0xff, 0x00, 0x04, 0x5e, 0x00, 0x00};
 static uint8_t IOL_Page1_Packet[2] = {0};
+static uint8_t IOL_Checksum_SeedValue = 0x52;
 
 static uint8_t Page1_seq = 0;
 
@@ -36,6 +39,7 @@ uint16_t mseq_cnt;
 MSEQ_t mseq[MAX_MSEQ];
 StateIOLSeq stateIOLseq;
 IOL_CommChannel IOL_commchannel;
+IOL_RW_Access IOL_rw_access;
 
 uint8_t ck6 = 0;
 
@@ -216,18 +220,47 @@ void Verification_CKTChecksum (void)
     // printf(" Checksum Pass : %d\r\n", ChecksumTorF);
 }
 
-void mseq_upload_master (uint16_t size)
+void IOL_StartUp_Seq_Page (uint16_t size)
 {
-    // uint16_t rxdataSize = 0;
-    // uint16_t cks_offset = 1;
     uint8_t rxdataSize = 0;
-    uint8_t cks_offset = 0;
-    uint8_t checksumflag = 0;
-    uint8_t checksumlength = 0;
     uint8_t eventdebug = 0;
-    uint8_t i = 0;
+    uint8_t Page_Write_ChecksumValue[1] = {0};
 
     rxdataSize = (uint8_t)size;
+
+    // State = StartUP ,   Channel = Page인지 구분
+    if ((stateIOLseq == IOL_StartUp) && (Print_MC_CommunicationChannel(uart1_rx_IDLE_buf[0]) == IOL_Channel_Page))
+    {
+        // R/W   Read 체크
+        if (Decode_MC_ReadWrite(uart1_rx_IDLE_buf[0]) == IOL_RW_Read)
+        {
+            IOL_ENABLE;
+            IOL_Page1_Packet[0] = IOL_Page1_SeqValue[Page1_seq++];
+
+            // IOL_Page1_Packet[1] = Decode_CKS_GetChecksum(IOL_Page1_Packet[0], 1);
+            IOL_Page1_Packet[1] = Decode_CKS_GetChecksum(&IOL_Page1_Packet[0], 1);
+
+            if (HAL_UART_Transmit_IT(&huart1, (uint8_t *) IOL_Page1_Packet, 2) != HAL_OK)
+            {
+                Error_Handler();
+            }
+            // HAL_UART_Transmit(&huart1,(uint8_t *) IOL_Page1_Packet, 2, 10);
+            // IOL_DISABLE;
+        }
+        // R/W   Write 체크
+        else if (Decode_MC_ReadWrite(uart1_rx_IDLE_buf[0]) == IOL_RW_Write)
+        {
+            IOL_ENABLE;
+            Page_Write_ChecksumValue[0] = Decode_CKS_GetChecksum(&IOL_Checksum_SeedValue, 0);
+            // if (HAL_UART_Transmit_IT(&huart1, (uint8_t *) Decode_CKS_GetChecksum(0x52, 0), 1) != HAL_OK)
+            if (HAL_UART_Transmit_IT(&huart1, (uint8_t *) Page_Write_ChecksumValue, 1) != HAL_OK)
+            {
+                Error_Handler();
+            }
+            // HAL_UART_Transmit(&huart1,(uint8_t *) Decode_CKS_GetChecksum(0x52, 0), 1, 10);
+            // IOL_DISABLE;
+        }
+    }
     // checksumlength = rxdataSize - mseq[mseq_cnt + cks_offset].Device_octet_cnt;
     // mseq[mseq_cnt].CKS = uart1_rx_IDLE_buf[rxdataSize - 1];
     
@@ -242,73 +275,103 @@ void mseq_upload_master (uint16_t size)
     
     // mseq[mseq_cnt].MC = uart1_rx_IDLE_buf[0];
     // mseq[mseq_cnt].CKT = uart1_rx_IDLE_buf[1];
-    if (uart_rx_IDLE_TotalCnt == 4)
-    {
-        IOL_ENABLE;
-        IOL_Page1_Packet[0] = 0x09;
+    // if (uart_rx_IDLE_TotalCnt == 4)
+    // {
+    //     IOL_ENABLE;
+    //     IOL_Page1_Packet[0] = 0x09;
 
-        IOL_Page1_Packet[1] = Decode_CKS_GetChecksum(IOL_Page1_Packet[0], 1);
+    //     IOL_Page1_Packet[1] = Decode_CKS_GetChecksum(IOL_Page1_Packet[0], 1);
 
-        HAL_UART_Transmit(&huart1,(uint8_t *) IOL_Page1_Packet, 2, 10);
-        IOL_DISABLE;
-    }
-    else
-    {
-        // Channel 이 Page인지 구분
-        if ((stateIOLseq == IOL_StartUp) && (Print_MC_CommunicationChannel(uart1_rx_IDLE_buf[0]) == IOL_Channel_Page))
-        {
-            // Read
-            if(Decode_MC_ReadWrite(uart1_rx_IDLE_buf[0]) == 'R')
-            {
-                IOL_ENABLE;
-                IOL_Page1_Packet[0] = IOL_Page1_SeqValue[Page1_seq++];
+    //     HAL_UART_Transmit(&huart1,(uint8_t *) IOL_Page1_Packet, 2, 10);
+    //     IOL_DISABLE;
+    // }
+    // else
+    // {
+    //     // Channel 이 Page인지 구분
+    //     if ((stateIOLseq == IOL_StartUp) && (Print_MC_CommunicationChannel(uart1_rx_IDLE_buf[0]) == IOL_Channel_Page))
+    //     {
+    //         // Read
+    //         if(Decode_MC_ReadWrite(uart1_rx_IDLE_buf[0]) == IOL_RW_Read)
+    //         {
+    //             IOL_ENABLE;
+    //             IOL_Page1_Packet[0] = IOL_Page1_SeqValue[Page1_seq++];
 
-                IOL_Page1_Packet[1] = Decode_CKS_GetChecksum(IOL_Page1_Packet[0], 1);
+    //             IOL_Page1_Packet[1] = Decode_CKS_GetChecksum(IOL_Page1_Packet[0], 1);
 
-                HAL_UART_Transmit(&huart1,(uint8_t *) IOL_Page1_Packet, 2, 10);
-                IOL_DISABLE;
-            }
-            //Write
-            else
-            {
-                IOL_ENABLE;
-                HAL_UART_Transmit(&huart1,(uint8_t *) Decode_CKS_GetChecksum(0x52, 0), 1, 10);
-                IOL_DISABLE;
-            }
-        }
-        else
-        {
+    //             if (HAL_UART_Transmit_IT(&huart1, (uint8_t *) IOL_Page1_Packet, 2) != HAL_OK)
+    //             {
+    //                 Error_Handler();
+    //             }
+    //             // HAL_UART_Transmit(&huart1,(uint8_t *) IOL_Page1_Packet, 2, 10);
+    //             // IOL_DISABLE;
+    //         }
+    //         //Write
+    //         else
+    //         {
+    //             IOL_ENABLE;
+    //             if (HAL_UART_Transmit_IT(&huart1, (uint8_t *) Decode_CKS_GetChecksum(0x52, 0), 1) != HAL_OK)
+    //             {
+    //                 Error_Handler();
+    //             }
+    //             // HAL_UART_Transmit(&huart1,(uint8_t *) Decode_CKS_GetChecksum(0x52, 0), 1, 10);
+    //             // IOL_DISABLE;
+    //         }
+    //     }
+    //     else
+    //     {
 
-        }
-    }
+    //     }
+    // }
         
-    // mseq[mseq_cnt].MC = uart2_rx_stack_buf[0];
-    // mseq[mseq_cnt].CKT = uart2_rx_stack_buf[1];
+    // // mseq[mseq_cnt].MC = uart2_rx_stack_buf[0];
+    // // mseq[mseq_cnt].CKT = uart2_rx_stack_buf[1];
 
-    // checksumflag = Decode_CKT_GetChecksum((uint8_t *) uart2_rx_IDLE_buf, (mseq[mseq_cnt].Master_octet_cnt - mseq[mseq_cnt].Device_octet_cnt));
-    // mseq[mseq_cnt].Master_checksum = checksumflag;
+    // // checksumflag = Decode_CKT_GetChecksum((uint8_t *) uart2_rx_IDLE_buf, (mseq[mseq_cnt].Master_octet_cnt - mseq[mseq_cnt].Device_octet_cnt));
+    // // mseq[mseq_cnt].Master_checksum = checksumflag;
 
-    #if 0 // diagnosis 데이터 디버깅용도 트리거
-    eventdebug = Decode_CKS_EventFlag(mseq[mseq_cnt].CKS);
-    if ( eventdebug == 'E' )
-    {
-        // HAL_GPIO_TogglePin(UART_DEBUG_PORT, DEBUG_TEST_PIN);
-        // HAL_GPIO_TogglePin(UART_DEBUG_PORT, DEBUG_TEST_PIN);
-    }
-    #endif
+    // #if 0 // diagnosis 데이터 디버깅용도 트리거
+    // eventdebug = Decode_CKS_EventFlag(mseq[mseq_cnt].CKS);
+    // if ( eventdebug == 'E' )
+    // {
+    //     // HAL_GPIO_TogglePin(UART_DEBUG_PORT, DEBUG_TEST_PIN);
+    //     // HAL_GPIO_TogglePin(UART_DEBUG_PORT, DEBUG_TEST_PIN);
+    // }
+    // #endif
     
-    mseq_cnt++;
-    if (mseq_cnt >= 100)
-    {
-        mseq_cnt = 0;
-        HAL_UART_DMAStop(&huart1);
+    // mseq_cnt++;
+    // if (mseq_cnt >= 100)
+    // {
+    //     mseq_cnt = 0;
+    //     HAL_UART_DMAStop(&huart1);
         
-        HAL_NVIC_DisableIRQ(USART1_IRQn);
-    }
-    // mseq[mseq_cnt].Master_checksum = Decode_CKT_GetChecksum((uint8_t *) uart2_rx_IDLE_buf, (rxdataSize - mseq[mseq_cnt + cks_offset].Device_octet_cnt));
+    //     HAL_NVIC_DisableIRQ(USART1_IRQn);
+    // }
+    // // mseq[mseq_cnt].Master_checksum = Decode_CKT_GetChecksum((uint8_t *) uart2_rx_IDLE_buf, (rxdataSize - mseq[mseq_cnt + cks_offset].Device_octet_cnt));
 }
 
 #if 1
+void IOL_PageTest (uint16_t size)
+{
+    uint8_t rxdataSize = 0;
+
+    uint8_t i = 0;
+
+    rxdataSize = (uint8_t)size;
+
+    IOL_ENABLE;
+    // IOL_Page1_Packet[0] = 0x49;
+    IOL_Page1_Packet[0] = IOL_Page1_SeqValue[Page1_seq++];;
+    
+    IOL_Page1_Packet[1] = Decode_CKS_GetChecksum(&IOL_Page1_Packet[0], 1);
+
+    if (HAL_UART_Transmit_IT(&huart1, (uint8_t *) IOL_Page1_Packet, 2) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    // HAL_UART_Transmit(&huart1,(uint8_t *) IOL_Page1_Packet, 2, 10);
+    // IOL_DISABLE;
+}
+#else
 void IOL_PageTest (uint16_t size)
 {
     uint8_t rxdataSize = 0;
@@ -436,9 +499,9 @@ static uint8_t Decode_MC_ReadWrite (uint8_t Data)
     switch (MCdata)
     {
         case 0 :
-            return 'W';
+            return IOL_RW_Write;
         case 1 :
-            return 'R';
+            return IOL_RW_Read;
         default :
             // printf("Unexpected value\n");
             return 'X';
@@ -466,16 +529,16 @@ static uint8_t Print_MC_CommunicationChannel (uint8_t Data)
     {
         case 0 :
             // printf("%s,", CommunicationChannel.MC_Com_Ch_0);
-            return 0;
+            return IOL_Channel_Process;
         case 1 :
             // printf("%s,", CommunicationChannel.MC_Com_Ch_1);
-            return 1;
+            return IOL_Channel_Page;
         case 2 :
             // printf("%s,", CommunicationChannel.MC_Com_Ch_2);
-            return 2;
+            return IOL_Channel_Diagnosis;
         case 3 :
             // printf("%s,", CommunicationChannel.MC_Com_Ch_3);
-            return 3;
+            return IOL_Channel_ISDU;
     }
 }
 

@@ -94,6 +94,11 @@ extern void User_Toggle_Led (void);
 #define IOL_ENABLE                  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET)
 #define IOL_DISABLE                 HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET)
 
+#define DEBUG_GPIO_TOGGLE           HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0)
+#define DEBUG_GPIO_ON               HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET)
+#define DEBUG_GPIO_OFF              HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_REET)
+
+
 #define CDC_RXDATA_SIZE                     256
 #define CDC_TXDATA_SIZE                     256
 

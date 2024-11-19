@@ -12,8 +12,8 @@
   */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __USER_USB_PROC_H__
-#define __USER_USB_PROC_H__
+#ifndef __USER_UART_PROC_H__
+#define __USER_UART_PROC_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -86,6 +86,12 @@ Mseq_Checksum_t MseqChecksum =
   .Checksum_Pass = "Pass",
   .Checksum_Error = "Error",
 };
+
+typedef enum
+{
+  IOL_RW_Write = 0,
+  IOL_RW_Read
+} IOL_RW_Access;
 
 typedef enum
 {

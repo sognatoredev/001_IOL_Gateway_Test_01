@@ -60,7 +60,7 @@ extern TIM_HandleTypeDef htim1;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern UART_HandleTypeDef huart1;
 /* USER CODE BEGIN EV */
-
+extern uint8_t IOL_RX_CONTINUE_FLAG;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -301,37 +301,72 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
 }
 
+uint8_t IOL_Rx_IDLEFlag = 0;
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
   uart_rx_IDLE_TotalCnt += Size;
-
+  
   if (huart->Instance == USART1)
   {
-    HAL_UART_DMAStop(&huart1);
-    HAL_NVIC_DisableIRQ(USART1_IRQn);
-
     
-    if( uart_rx_IDLE_TotalCnt >= 3)
+    // HAL_UART_DMAStop(&huart1);
+    // HAL_NVIC_DisableIRQ(USART1_IRQn);
+    // HAL_UART_MspDeInit(&huart1);
+    // if ((uart_rx_IDLE_TotalCnt >= 4) && (IOL_RX_CONTINUE_FLAG != 0))
+    // {
+    //   IOL_RX_CONTINUE_FLAG = 0;
+    //   return;
+    // }
+
+    if (uart_rx_IDLE_TotalCnt >= 3)
     {
-      IOL_PageTest(Size);
+      DEBUG_GPIO_TOGGLE;
+      if (IOL_Rx_IDLEFlag == 1)
+      {
+        IOL_Rx_IDLEFlag = 0;
+      }
+      else
+      {
+        IOL_Rx_IDLEFlag = 1;
+        // IOL_PageTest(Size);
+        IOL_StartUp_Seq_Page(Size);
+      }
+
     }
-    // mseq_upload_master(Size);
-    // HAL_UART_DMAResume(&huart1);
 
-    // HAL_NVIC_EnableIRQ(USART1_IRQn);
-    // HAL_UART_DMAResume(&huart1);
-
-    // __HAL_DMA_DISABLE(&hdma_usart1_rx);
-    // hdma_usart1_rx.Instance->CNDTR = UART_RX_IDLE_BUFSIZE;
-    // __HAL_DMA_ENABLE(&hdma_usart1_rx);
+    __HAL_DMA_DISABLE(&hdma_usart1_rx);
+    hdma_usart1_rx.Instance->CNDTR = UART_RX_IDLE_BUFSIZE;
+    __HAL_DMA_ENABLE(&hdma_usart1_rx);
 
     __HAL_UART_GET_FLAG(huart, UART_FLAG_IDLE);
     ATOMIC_SET_BIT(huart->Instance->CR1, USART_CR1_IDLEIE);
     HAL_UARTEx_ReceiveToIdle_DMA(&huart1, (uint8_t *) uart1_rx_IDLE_buf, UART_RX_IDLE_BUFSIZE);
     __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
-  }
-  else if (huart->Instance == USART2)
-  {
+    // if (IOL_Rx_IDLEFlag == 1)
+    // {
+    //   DEBUG_GPIO_TOGGLE;
+    //   IOL_Rx_IDLEFlag = 0;
+    // }
+    // else if((IOL_Rx_IDLEFlag == 0) && (uart_rx_IDLE_TotalCnt >= 3))
+    // {
+    //   DEBUG_GPIO_TOGGLE;
+    //   IOL_Rx_IDLEFlag = 1;
+    //   IOL_PageTest(Size);
+    // }
+
+    // __HAL_DMA_DISABLE(&hdma_usart1_rx);
+    // hdma_usart1_rx.Instance->CNDTR = UART_RX_IDLE_BUFSIZE;
+    // __HAL_DMA_ENABLE(&hdma_usart1_rx);
+
+    // __HAL_UART_GET_FLAG(huart, UART_FLAG_IDLE);
+    // ATOMIC_SET_BIT(huart->Instance->CR1, USART_CR1_IDLEIE);
+    // HAL_UARTEx_ReceiveToIdle_DMA(&huart1, (uint8_t *) uart1_rx_IDLE_buf, UART_RX_IDLE_BUFSIZE);
+    // __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
+    // mseq_upload_master(Size);
+    // HAL_UART_DMAResume(&huart1);
+
+    // HAL_NVIC_EnableIRQ(USART1_IRQn);
+    // HAL_UART_DMAResume(&huart1);
 
   }
 }
@@ -341,12 +376,20 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
   if (huart->Instance == USART1)
   {
-    HAL_NVIC_EnableIRQ(USART1_IRQn);
-    HAL_UART_DMAResume(&huart1);
+    IOL_DISABLE;
+    // HAL_UART_MspInit(&huart1);
 
-    __HAL_DMA_DISABLE(&hdma_usart1_rx);
-    hdma_usart1_rx.Instance->CNDTR = UART_RX_IDLE_BUFSIZE;
-    __HAL_DMA_ENABLE(&hdma_usart1_rx);
+    // HAL_NVIC_EnableIRQ(USART1_IRQn);
+    // HAL_UART_DMAResume(&huart1);
+
+    // __HAL_DMA_DISABLE(&hdma_usart1_rx);
+    // hdma_usart1_rx.Instance->CNDTR = UART_RX_IDLE_BUFSIZE;
+    // __HAL_DMA_ENABLE(&hdma_usart1_rx);
+
+    // __HAL_UART_GET_FLAG(huart, UART_FLAG_IDLE);
+    // ATOMIC_SET_BIT(huart->Instance->CR1, USART_CR1_IDLEIE);
+    // HAL_UARTEx_ReceiveToIdle_DMA(&huart1, (uint8_t *) uart1_rx_IDLE_buf, UART_RX_IDLE_BUFSIZE);
+    // __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
   }
 }
 /* USER CODE END 1 */
