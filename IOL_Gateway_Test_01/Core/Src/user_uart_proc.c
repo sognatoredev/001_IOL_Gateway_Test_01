@@ -262,6 +262,21 @@ static uint8_t PreOP_CKS_GetChecksum (const uint8_t * pData, uint8_t length, uin
         {
             ck8 ^= *pData++;
         }
+        //Section A.1.6
+        uint8_t bit5 = ((ck8 >> 7) & 1U) ^ ((ck8 >> 5) & 1U) ^ ((ck8 >> 3) & 1U) ^ ((ck8 >> 1) & 1U);
+        uint8_t bit4 = ((ck8 >> 6) & 1U) ^ ((ck8 >> 4) & 1U) ^ ((ck8 >> 2) & 1U) ^ (ck8 & 1U);
+        uint8_t bit3 = ((ck8 >> 7) & 1U) ^ ((ck8 >> 6) & 1U);
+        uint8_t bit2 = ((ck8 >> 5) & 1U) ^ ((ck8 >> 4) & 1U);
+        uint8_t bit1 = ((ck8 >> 3) & 1U) ^ ((ck8 >> 2) & 1U);
+        uint8_t bit0 = ((ck8 >> 1) & 1U) ^ ((ck8 & 1U));
+        uint8_t ck6 =   bit5 << 5 |
+                        bit4 << 4 |
+                        bit3 << 3 |
+                        bit2 << 2 |
+                        bit1 << 1 |
+                        bit0;
+        
+        return ck6;
     }
     else if (eventflag == 1)
     {
@@ -271,8 +286,25 @@ static uint8_t PreOP_CKS_GetChecksum (const uint8_t * pData, uint8_t length, uin
         }
 
         ck8 ^= eventbitset;
+
+        //Section A.1.6
+        uint8_t bit5 = ((ck8 >> 7) & 1U) ^ ((ck8 >> 5) & 1U) ^ ((ck8 >> 3) & 1U) ^ ((ck8 >> 1) & 1U);
+        uint8_t bit4 = ((ck8 >> 6) & 1U) ^ ((ck8 >> 4) & 1U) ^ ((ck8 >> 2) & 1U) ^ (ck8 & 1U);
+        uint8_t bit3 = ((ck8 >> 7) & 1U) ^ ((ck8 >> 6) & 1U);
+        uint8_t bit2 = ((ck8 >> 5) & 1U) ^ ((ck8 >> 4) & 1U);
+        uint8_t bit1 = ((ck8 >> 3) & 1U) ^ ((ck8 >> 2) & 1U);
+        uint8_t bit0 = ((ck8 >> 1) & 1U) ^ ((ck8 & 1U));
+        uint8_t ck6 =   bit5 << 5 |
+                        bit4 << 4 |
+                        bit3 << 3 |
+                        bit2 << 2 |
+                        bit1 << 1 |
+                        bit0;
+        
+        return eventbitset | ck6;
     }
 
+    #if 0
     //Section A.1.6
     uint8_t bit5 = ((ck8 >> 7) & 1U) ^ ((ck8 >> 5) & 1U) ^ ((ck8 >> 3) & 1U) ^ ((ck8 >> 1) & 1U);
     uint8_t bit4 = ((ck8 >> 6) & 1U) ^ ((ck8 >> 4) & 1U) ^ ((ck8 >> 2) & 1U) ^ (ck8 & 1U);
@@ -286,7 +318,9 @@ static uint8_t PreOP_CKS_GetChecksum (const uint8_t * pData, uint8_t length, uin
                     bit2 << 2 |
                     bit1 << 1 |
                     bit0;
+    
     return eventbitset | ck6;
+    #endif
 }
 
 // if (stateIOLseq == IOL_PreOP)
@@ -307,10 +341,14 @@ void IOL_State_PreOP (void)
             preop_data_arr[i]= IOL_PreOP_Packet[PreOP_seq_cnt][i];
         }
 
-        // PreOP Mode에서 Diagnosis 는 Event flag 있음 
+        // PreOP Mode에서 Diagnosis 는 Event flag 있음 PreOP_CKS_GetChecksum 함수의 3번째 인자 1 = event set, 0 = event reset.
         if (IOL_Commchannel_value == IOL_Channel_Diagnosis)
         {
             preop_data_arr[i] = PreOP_CKS_GetChecksum(&preop_data_arr[0], PREOP_DATA_LENGTH, 1);
+        }
+        else if (IOL_Commchannel_value == IOL_Channel_ISDU)
+        {
+            preop_data_arr[i] = PreOP_CKS_GetChecksum(&preop_data_arr[0], PREOP_DATA_LENGTH, 0);
         }
         else
         {
