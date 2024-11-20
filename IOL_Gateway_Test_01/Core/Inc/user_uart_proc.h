@@ -111,6 +111,8 @@ typedef enum
 #define MAX_RX_DATA             1000
 
 #define MAX_MSEQ                100
+
+#define PREOP_DATA_LENGTH       8
 // #define MAX_MSEQ                1000
 extern  MSEQ_t mseq[MAX_MSEQ];
 
