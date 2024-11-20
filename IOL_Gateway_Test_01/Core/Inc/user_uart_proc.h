@@ -121,6 +121,7 @@ extern void Verification_CKTChecksum (void);
 extern void mseq_uploaderror_device (void);
 extern void IOL_PageTest (uint16_t size);
 
+#define PREOP_DATA_LENGTH       8
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

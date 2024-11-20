@@ -27,7 +27,19 @@ uint8_t IOL_RX_CONTINUE_FLAG = 0;
 static uint8_t IOL_Page1_Packet[2] = {0};
 static uint8_t IOL_Checksum_SeedValue = 0x52;
 
+static uint8_t IOL_PreOP_Packet[8][8] = {
+                                        {0x81, 0x54, 0xff, 0x91, 0x00, 0x00, 0x00, 0x00},
+                                        {0x54, 0xff, 0x91, 0x00, 0x00, 0x00, 0x00, 0x00},
+                                        {0xff, 0x91, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+                                        {0x91, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+                                        {0xd1, 0x13, 0x46, 0x33, 0x30, 0x36, 0x30, 0x32},
+                                        {0x35, 0x37, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+                                        {0x00, 0x00, 0xb1, 0x00, 0x00, 0x00, 0x00, 0x00},
+                                        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+                                        };
+
 static uint8_t Page1_seq = 0;
+static uint8_t PreOP_seq_cnt = 0;
 
 static uint8_t Decode_CKS_EventFlag (uint8_t Data);
 static uint8_t Decode_MC_ReadWrite (uint8_t Data);
@@ -150,33 +162,48 @@ static uint8_t Decode_CKS_GetChecksum (const uint8_t * pData, uint8_t length)
     {
         ck8 ^= *pData++;
     }
-    // if (checksumsize < 2)
-    // {
-    //     return 0;
-    // }
-    // if (checksumsize == 2)
-    // {
-    //     ck8 ^= *pData++; // MC Check 
 
-    //     ck8 ^= *pData++ & 0xC0; // CKT 6b clear. CKT Check
-        
-    // }
-    // else if (checksumsize > 2)
-    // {
-    //     ck8 ^= *pData++; // MC Check 
+    //Section A.1.6
+    uint8_t bit5 = ((ck8 >> 7) & 1U) ^ ((ck8 >> 5) & 1U) ^ ((ck8 >> 3) & 1U) ^ ((ck8 >> 1) & 1U);
+    uint8_t bit4 = ((ck8 >> 6) & 1U) ^ ((ck8 >> 4) & 1U) ^ ((ck8 >> 2) & 1U) ^ (ck8 & 1U);
+    uint8_t bit3 = ((ck8 >> 7) & 1U) ^ ((ck8 >> 6) & 1U);
+    uint8_t bit2 = ((ck8 >> 5) & 1U) ^ ((ck8 >> 4) & 1U);
+    uint8_t bit1 = ((ck8 >> 3) & 1U) ^ ((ck8 >> 2) & 1U);
+    uint8_t bit0 = ((ck8 >> 1) & 1U) ^ ((ck8 & 1U));
+    uint8_t ck6 =   bit5 << 5 |
+                    bit4 << 4 |
+                    bit3 << 3 |
+                    bit2 << 2 |
+                    bit1 << 1 |
+                    bit0;
+    return ck6;
+}
 
-    //     ck8 ^= *pData++ & 0xC0; // CKT 6b clear. CKT Check
+//preOP 모드 Event 비트 포함 CKS 생성
+static uint8_t PreOP_CKS_GetChecksum (const uint8_t * pData, uint8_t length, uint8_t eventflag)
+{
+    uint8_t ck8 = 0x52;
+    uint8_t checksumsize = 0;
+    uint8_t eventbitset = 0x80;
 
-    //     for (uint8_t i = 0; i < length -2; i++)
-    //     {
-    //         ck8 ^= *pData++;
-    //     }
-    // }
+    checksumsize = length;
 
-    // for (uint8_t i = 2; i < (length - 2); i++)
-    // {
-    //         ck8 ^= *pData++;
-    // }
+    if (eventflag == 0)
+    {
+        for (uint8_t i = 0; i < checksumsize; i++)
+        {
+            ck8 ^= *pData++;
+        }
+    }
+    else if (eventflag == 1)
+    {
+        for (uint8_t i = 0; i < checksumsize; i++)
+        {
+            ck8 ^= *pData++;
+        }
+
+        ck8 ^= eventbitset;
+    }
 
     //Section A.1.6
     uint8_t bit5 = ((ck8 >> 7) & 1U) ^ ((ck8 >> 5) & 1U) ^ ((ck8 >> 3) & 1U) ^ ((ck8 >> 1) & 1U);
@@ -220,6 +247,208 @@ void Verification_CKTChecksum (void)
     // printf(" Checksum Pass : %d\r\n", ChecksumTorF);
 }
 
+// start up page 1. IO-Link MC Read Write 판단 
+static void IOL_Decode_ReadWrite (void)
+{
+    uint8_t Page_Write_ChecksumValue[1] = {0};
+
+    // R/W   Read 체크
+    if (Decode_MC_ReadWrite(uart1_rx_IDLE_buf[0]) == IOL_RW_Read)
+    {
+        IOL_ENABLE;
+
+        IOL_Page1_Packet[0] = IOL_Page1_SeqValue[Page1_seq++];
+        IOL_Page1_Packet[1] = Decode_CKS_GetChecksum(&IOL_Page1_Packet[0], 1);
+
+        if (HAL_UART_Transmit_IT(&huart1, (uint8_t *) IOL_Page1_Packet, 2) != HAL_OK)
+        {
+            Error_Handler();
+        }
+        // HAL_UART_Transmit(&huart1,(uint8_t *) IOL_Page1_Packet, 2, 10);
+        // IOL_DISABLE;
+    }
+    // R/W   Write 체크
+    else if (Decode_MC_ReadWrite(uart1_rx_IDLE_buf[0]) == IOL_RW_Write)
+    {
+        IOL_ENABLE;
+
+        // Page1의 Write의 경우 디바이스는 데이터가 없음.
+        // 기본 seed value인 0x52로만 checksum 계산
+        Page_Write_ChecksumValue[0] = Decode_CKS_GetChecksum(&IOL_Checksum_SeedValue, 0);
+
+        if (HAL_UART_Transmit_IT(&huart1, (uint8_t *) Page_Write_ChecksumValue, 1) != HAL_OK)
+        {
+            Error_Handler();
+        }
+        
+        //Master Command to PreOP.
+        if (uart1_rx_IDLE_buf[2] == 0x9A)
+        {
+            stateIOLseq = IOL_PreOP;
+        }
+        // HAL_UART_Transmit(&huart1,(uint8_t *) Decode_CKS_GetChecksum(0x52, 0), 1, 10);
+        // IOL_DISABLE;
+    }
+}
+
+// PreOP Mode R/W 체크
+static uint8_t IOL_PreOP_ReadWriteCheck (void)
+{
+    // R/W   Read 체크
+    if (Decode_MC_ReadWrite(uart1_rx_IDLE_buf[0]) == IOL_RW_Read)
+    {
+        return IOL_RW_Read;
+    }
+    // R/W   Write 체크
+    else if (Decode_MC_ReadWrite(uart1_rx_IDLE_buf[0]) == IOL_RW_Write)
+    {
+        return IOL_RW_Write;
+    }
+}
+
+// PreOP Mode Page Response.
+static void IOL_PreOP_Page_Response (void)
+{
+    uint8_t readwriteValue = 0;
+    uint8_t Page_Write_ChecksumValue[1] = {0};
+
+    readwriteValue = IOL_PreOP_ReadWriteCheck();
+    IOL_ENABLE;
+
+    if (readwriteValue == IOL_RW_Read)
+    {
+        
+    }
+    else if (readwriteValue == IOL_RW_Write)
+    {
+        Page_Write_ChecksumValue[0] = Decode_CKS_GetChecksum(&IOL_Checksum_SeedValue, 0);
+
+        if (HAL_UART_Transmit_IT(&huart1, (uint8_t *) Page_Write_ChecksumValue, 1) != HAL_OK)
+        {
+            Error_Handler();
+        }
+    }
+}
+
+// PreOP Mode Diagnosis Response.
+static void IOL_PreOP_Diagnosis_Response (void)
+{
+    uint8_t readwriteValue = 0;
+    uint8_t Page_Write_ChecksumValue[1] = {0};
+
+    readwriteValue = IOL_PreOP_ReadWriteCheck();
+    IOL_ENABLE;
+
+    if (readwriteValue == IOL_RW_Read)
+    {
+        
+    }
+    else if (readwriteValue == IOL_RW_Write)
+    {
+        Page_Write_ChecksumValue[0] = Decode_CKS_GetChecksum(&IOL_Checksum_SeedValue, 0);
+
+        if (HAL_UART_Transmit_IT(&huart1, (uint8_t *) Page_Write_ChecksumValue, 1) != HAL_OK)
+        {
+            Error_Handler();
+        }
+    }
+}
+
+// PreOP Mode ISDU Response.
+static void IOL_PreOP_ISDU_Response (void)
+{
+    uint8_t readwriteValue = 0;
+    uint8_t Page_Write_ChecksumValue[1] = {0};
+
+    readwriteValue = IOL_PreOP_ReadWriteCheck();
+    IOL_ENABLE;
+
+    if (readwriteValue == IOL_RW_Read)
+    {
+        
+    }
+    else if (readwriteValue == IOL_RW_Write)
+    {
+
+    }
+}
+
+// if (stateIOLseq == IOL_PreOP)
+void IOL_State_PreOP (uint16_t size)
+{
+    uint8_t i, j = 0;
+    uint8_t IOL_Commchannel_value = 0;
+    uint8_t preop_data_arr[PREOP_DATA_LENGTH + 1] = {0}; // + 1   CKS 
+    // uint8_t Page_Write_ChecksumValue[0] = {0};
+
+    IOL_Commchannel_value = Print_MC_CommunicationChannel(uart1_rx_IDLE_buf[0]);
+    // uint8_t Page_Write_ChecksumValue[1] = {0};
+    
+    IOL_ENABLE;
+    
+    if (IOL_PreOP_ReadWriteCheck() == IOL_RW_Read)
+    {
+        for (i=0; i < PREOP_DATA_LENGTH; i++)
+        {
+            preop_data_arr[i]= IOL_PreOP_Packet[PreOP_seq_cnt][i];
+        }
+
+        // PreOP Mode에서 Diagnosis 는 Event flag 있음 
+        if (IOL_Commchannel_value == IOL_Channel_Diagnosis)
+        {
+            preop_data_arr[i] = PreOP_CKS_GetChecksum(&preop_data_arr[0], PREOP_DATA_LENGTH, 1);
+        }
+        else
+        {
+            preop_data_arr[i] = PreOP_CKS_GetChecksum(&preop_data_arr[0], PREOP_DATA_LENGTH, 0);
+        }
+        
+        PreOP_seq_cnt++;
+
+        if (HAL_UART_Transmit_IT(&huart1, (uint8_t *) preop_data_arr, PREOP_DATA_LENGTH + 1) != HAL_OK)
+        {
+            Error_Handler();
+        }
+    }
+    else if (IOL_PreOP_ReadWriteCheck() == IOL_RW_Write)
+    {
+        // PreOP Mode에서 Diagnosis 는 Event flag 있고, ISDU Write 경우 Event 플래그 있음 
+        if ((IOL_Commchannel_value == IOL_Channel_Diagnosis) || (IOL_Commchannel_value == IOL_Channel_ISDU))
+        {
+            preop_data_arr[0] = PreOP_CKS_GetChecksum(&preop_data_arr[0], 0, 1);
+        }
+        else
+        {
+            preop_data_arr[0] = PreOP_CKS_GetChecksum(&preop_data_arr[0], 0, 0);
+        }
+
+        if (HAL_UART_Transmit_IT(&huart1, (uint8_t *) preop_data_arr, 1) != HAL_OK)
+        {
+            Error_Handler();
+        }
+    }
+
+    // // Channel 구분
+    // switch (IOL_Commchannel_value)
+    // {
+    //     // Page
+    //     case IOL_Channel_Page :
+    //         IOL_PreOP_Page_Response();
+    //         break;
+    //     // Diagnosis
+    //     case IOL_Channel_Diagnosis :
+
+    //         break;
+    //     // ISDU
+    //     case IOL_Channel_ISDU :
+
+    //         break;
+    //     default :
+    //         break;
+    // }
+}
+
+// IO-Link StartUp Seq Page 통신
 void IOL_StartUp_Seq_Page (uint16_t size)
 {
     uint8_t rxdataSize = 0;
@@ -228,125 +457,19 @@ void IOL_StartUp_Seq_Page (uint16_t size)
 
     rxdataSize = (uint8_t)size;
 
-    // State = StartUP ,   Channel = Page인지 구분
-    if ((stateIOLseq == IOL_StartUp) && (Print_MC_CommunicationChannel(uart1_rx_IDLE_buf[0]) == IOL_Channel_Page))
+    // State = StartUP ,   
+    if (stateIOLseq == IOL_StartUp)
     {
-        // R/W   Read 체크
-        if (Decode_MC_ReadWrite(uart1_rx_IDLE_buf[0]) == IOL_RW_Read)
+        // Channel = Page가 맞는지 구분
+        if (Print_MC_CommunicationChannel(uart1_rx_IDLE_buf[0]) == IOL_Channel_Page)
         {
-            IOL_ENABLE;
-            IOL_Page1_Packet[0] = IOL_Page1_SeqValue[Page1_seq++];
-
-            // IOL_Page1_Packet[1] = Decode_CKS_GetChecksum(IOL_Page1_Packet[0], 1);
-            IOL_Page1_Packet[1] = Decode_CKS_GetChecksum(&IOL_Page1_Packet[0], 1);
-
-            if (HAL_UART_Transmit_IT(&huart1, (uint8_t *) IOL_Page1_Packet, 2) != HAL_OK)
-            {
-                Error_Handler();
-            }
-            // HAL_UART_Transmit(&huart1,(uint8_t *) IOL_Page1_Packet, 2, 10);
-            // IOL_DISABLE;
-        }
-        // R/W   Write 체크
-        else if (Decode_MC_ReadWrite(uart1_rx_IDLE_buf[0]) == IOL_RW_Write)
-        {
-            IOL_ENABLE;
-            Page_Write_ChecksumValue[0] = Decode_CKS_GetChecksum(&IOL_Checksum_SeedValue, 0);
-            // if (HAL_UART_Transmit_IT(&huart1, (uint8_t *) Decode_CKS_GetChecksum(0x52, 0), 1) != HAL_OK)
-            if (HAL_UART_Transmit_IT(&huart1, (uint8_t *) Page_Write_ChecksumValue, 1) != HAL_OK)
-            {
-                Error_Handler();
-            }
-            // HAL_UART_Transmit(&huart1,(uint8_t *) Decode_CKS_GetChecksum(0x52, 0), 1, 10);
-            // IOL_DISABLE;
+            IOL_Decode_ReadWrite();
         }
     }
-    // checksumlength = rxdataSize - mseq[mseq_cnt + cks_offset].Device_octet_cnt;
-    // mseq[mseq_cnt].CKS = uart1_rx_IDLE_buf[rxdataSize - 1];
-    
-    // memcpy(uart2_rx_stack_buf + uart2_rx_stackcnt_total, uart2_rx_IDLE_buf, (rxdataSize - mseq[mseq_cnt + cks_offset].Device_octet_cnt));
-    // mseq[mseq_cnt].Start_Octet = uart2_rx_stack_buf + uart2_rx_stackcnt_total; // 데이터 시작점부터 출력 하기위한 포인터 
-    // memcpy(uart2_rx_stack_buf + uart2_rx_stackcnt_total, uart2_rx_IDLE_buf, rxdataSize);
-    // mseq[mseq_cnt].Start_Octet = uart2_rx_stack_buf + uart2_rx_stackcnt_total; // 데이터 시작점부터 출력 하기위한 포인터 
-    // mseq[mseq_cnt].End_Octet = uart2_rx_IDLE_buf[rxdataSize - 1]; // 데이터 끝 지점 포인터 (수정 필요함)
-    // uart2_rx_stackcnt_total += (uint32_t) rxdataSize; // octet 데이터 수 만큼 포인터 증가
-
-    // mseq[mseq_cnt].Master_octet_cnt = rxdataSize;
-    
-    // mseq[mseq_cnt].MC = uart1_rx_IDLE_buf[0];
-    // mseq[mseq_cnt].CKT = uart1_rx_IDLE_buf[1];
-    // if (uart_rx_IDLE_TotalCnt == 4)
-    // {
-    //     IOL_ENABLE;
-    //     IOL_Page1_Packet[0] = 0x09;
-
-    //     IOL_Page1_Packet[1] = Decode_CKS_GetChecksum(IOL_Page1_Packet[0], 1);
-
-    //     HAL_UART_Transmit(&huart1,(uint8_t *) IOL_Page1_Packet, 2, 10);
-    //     IOL_DISABLE;
-    // }
-    // else
-    // {
-    //     // Channel 이 Page인지 구분
-    //     if ((stateIOLseq == IOL_StartUp) && (Print_MC_CommunicationChannel(uart1_rx_IDLE_buf[0]) == IOL_Channel_Page))
-    //     {
-    //         // Read
-    //         if(Decode_MC_ReadWrite(uart1_rx_IDLE_buf[0]) == IOL_RW_Read)
-    //         {
-    //             IOL_ENABLE;
-    //             IOL_Page1_Packet[0] = IOL_Page1_SeqValue[Page1_seq++];
-
-    //             IOL_Page1_Packet[1] = Decode_CKS_GetChecksum(IOL_Page1_Packet[0], 1);
-
-    //             if (HAL_UART_Transmit_IT(&huart1, (uint8_t *) IOL_Page1_Packet, 2) != HAL_OK)
-    //             {
-    //                 Error_Handler();
-    //             }
-    //             // HAL_UART_Transmit(&huart1,(uint8_t *) IOL_Page1_Packet, 2, 10);
-    //             // IOL_DISABLE;
-    //         }
-    //         //Write
-    //         else
-    //         {
-    //             IOL_ENABLE;
-    //             if (HAL_UART_Transmit_IT(&huart1, (uint8_t *) Decode_CKS_GetChecksum(0x52, 0), 1) != HAL_OK)
-    //             {
-    //                 Error_Handler();
-    //             }
-    //             // HAL_UART_Transmit(&huart1,(uint8_t *) Decode_CKS_GetChecksum(0x52, 0), 1, 10);
-    //             // IOL_DISABLE;
-    //         }
-    //     }
-    //     else
-    //     {
-
-    //     }
-    // }
-        
-    // // mseq[mseq_cnt].MC = uart2_rx_stack_buf[0];
-    // // mseq[mseq_cnt].CKT = uart2_rx_stack_buf[1];
-
-    // // checksumflag = Decode_CKT_GetChecksum((uint8_t *) uart2_rx_IDLE_buf, (mseq[mseq_cnt].Master_octet_cnt - mseq[mseq_cnt].Device_octet_cnt));
-    // // mseq[mseq_cnt].Master_checksum = checksumflag;
-
-    // #if 0 // diagnosis 데이터 디버깅용도 트리거
-    // eventdebug = Decode_CKS_EventFlag(mseq[mseq_cnt].CKS);
-    // if ( eventdebug == 'E' )
-    // {
-    //     // HAL_GPIO_TogglePin(UART_DEBUG_PORT, DEBUG_TEST_PIN);
-    //     // HAL_GPIO_TogglePin(UART_DEBUG_PORT, DEBUG_TEST_PIN);
-    // }
-    // #endif
-    
-    // mseq_cnt++;
-    // if (mseq_cnt >= 100)
-    // {
-    //     mseq_cnt = 0;
-    //     HAL_UART_DMAStop(&huart1);
-        
-    //     HAL_NVIC_DisableIRQ(USART1_IRQn);
-    // }
-    // // mseq[mseq_cnt].Master_checksum = Decode_CKT_GetChecksum((uint8_t *) uart2_rx_IDLE_buf, (rxdataSize - mseq[mseq_cnt + cks_offset].Device_octet_cnt));
+    else if (stateIOLseq == IOL_PreOP)
+    {
+        // IOL_State_PreOP(size);
+    }
 }
 
 #if 1
