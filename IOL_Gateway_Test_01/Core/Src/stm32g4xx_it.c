@@ -22,6 +22,7 @@
 #include "stm32g4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+// #include "user_uart_proc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -377,6 +378,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
   if (huart->Instance == USART1)
   {
     IOL_DISABLE;
+    IOL_PD_Buffer_Clear();
     // HAL_UART_MspInit(&huart1);
 
     // HAL_NVIC_EnableIRQ(USART1_IRQn);

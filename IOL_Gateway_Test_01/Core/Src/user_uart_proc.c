@@ -32,7 +32,8 @@ static uint8_t IOL_PreOP_Packet[8][8] = {
                                         {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}  // R ISDU
                                         };
 
-static uint8_t IOL_OP_ProductName[OP_ISDU_OD_LENGTH][OP_ISDU_PRODUCTNAME_LENGTH] = {
+static uint8_t IOL_OP_ProductName[OP_ISDU_PRODUCTNAME_LENGTH][OP_ISDU_OD_LENGTH] = {
+    {0xd1, 0x1a},
     {0x53, 0x65},
     {0x65, 0x6e},
     {0x67, 0x72},
@@ -44,10 +45,30 @@ static uint8_t IOL_OP_ProductName[OP_ISDU_OD_LENGTH][OP_ISDU_PRODUCTNAME_LENGTH]
     {0x70, 0x70},
     {0x65, 0x72},
     {0x2d, 0x30},
-    {0x31, 0x00}
+    {0x31, 0xd7}
 };
 
-uint8_t IOL_OP_ProcessData_WriteRequest_Flag = 0;
+static uint8_t IOL_OP_SerialNumber[OP_ISDU_SERIALNUMBER_LENGTH][OP_ISDU_OD_LENGTH] = {
+    {0xd1, 0x13},
+    {0x46, 0x33},
+    {0x30, 0x36},
+    {0x30, 0x32},
+    {0x35, 0x37},
+    {0x00, 0x00},
+    {0x00, 0x00},
+    {0x00, 0x00},
+    {0x00, 0x00},
+    {0xb1, 0x00},
+};
+
+static uint8_t device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH]; // + 1   CKS
+static uint8_t device_ProcessDataOut_arr[OP_ISDU_OUT_PROCESSDATALENGTH];
+
+uint8_t IOL_OP_PD_Req_ProductName = 0;
+uint8_t IOL_OP_PD_Req_SerialNumber = 0;
+uint8_t IOL_OP_PD_Req_ProductName_Chkpdu = 0;
+uint8_t IOL_OP_PD_Req_SerialNumber_Chkpdu = 0;
+uint8_t IOL_OP_OD_Res_cnt = 0;
 
 uint8_t ProcessDataIn_cnt = 0;
 uint8_t ProcessDataOut_cnt = 0;
@@ -378,14 +399,20 @@ uint8_t IOL_MakePacket_Response_OD (uint8_t * pData)
     return ;
 }
 
+void IOL_PD_Buffer_Clear (void)
+{
+    memset(device_ProcessDataIn_arr, 0, sizeof(device_ProcessDataIn_arr));
+    memset(device_ProcessDataOut_arr, 0, sizeof(device_ProcessDataOut_arr));
+}
+
 // if (stateIOLseq == IOL_OP)
 void IOL_State_OP (void)
 {
     uint8_t i, j = 0;
     uint8_t IOL_Commchannel_value = 0;
     
-    static uint8_t device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH]; // + 1   CKS
-    static uint8_t device_ProcessDataOut_arr[OP_ISDU_OUT_PROCESSDATALENGTH];
+    // static uint8_t device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH]; // + 1   CKS
+    // static uint8_t device_ProcessDataOut_arr[OP_ISDU_OUT_PROCESSDATALENGTH];
 
     // static uint8_t preop_data_arr[PREOP_DATA_LENGTH + 1] = {0}; // + 1   CKS 
     // uint8_t Page_Write_ChecksumValue[0] = {0};
@@ -397,8 +424,41 @@ void IOL_State_OP (void)
     {
         if (IOL_Commchannel_value == IOL_Channel_ISDU)
         {
-            device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH - 2] = ProcessDataIn_cnt++; // Test cnt Value 
-            device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH - 1] = PreOP_CKS_GetChecksum(&device_ProcessDataIn_arr[0], (OP_ISDU_IN_PROCESSDATALENGTH - 1), 0);
+            if (IOL_OP_PD_Req_ProductName_Chkpdu == 1) // Product Name 요청이 있으면.
+            {
+                // IOL_OP_PD_Req_ProductName = 0;
+                device_ProcessDataIn_arr[0] = IOL_OP_ProductName[IOL_OP_OD_Res_cnt][0];
+                device_ProcessDataIn_arr[1] = IOL_OP_ProductName[IOL_OP_OD_Res_cnt][1];
+                IOL_OP_OD_Res_cnt++;
+
+                if (IOL_OP_OD_Res_cnt >= 13)
+                {
+                    IOL_OP_PD_Req_ProductName_Chkpdu = 0;
+                    IOL_OP_OD_Res_cnt = 0;
+                }
+
+                device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH - 1] = PreOP_CKS_GetChecksum(&device_ProcessDataIn_arr[0], (OP_ISDU_IN_PROCESSDATALENGTH - 1), 0);
+            }
+            else if (IOL_OP_PD_Req_SerialNumber_Chkpdu == 1) // Serial Number 요청이 있으면.
+            {
+                // IOL_OP_PD_Req_ProductName = 0;
+                device_ProcessDataIn_arr[0] = IOL_OP_SerialNumber[IOL_OP_OD_Res_cnt][0];
+                device_ProcessDataIn_arr[1] = IOL_OP_SerialNumber[IOL_OP_OD_Res_cnt][1];
+                IOL_OP_OD_Res_cnt++;
+
+                if (IOL_OP_OD_Res_cnt >= 10)
+                {
+                    IOL_OP_PD_Req_SerialNumber_Chkpdu = 0;
+                    IOL_OP_OD_Res_cnt = 0;
+                }
+
+                device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH - 1] = PreOP_CKS_GetChecksum(&device_ProcessDataIn_arr[0], (OP_ISDU_IN_PROCESSDATALENGTH - 1), 0);    
+            }
+            else
+            {
+                device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH - 2] = ProcessDataIn_cnt++; // Test cnt Value 
+                device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH - 1] = PreOP_CKS_GetChecksum(&device_ProcessDataIn_arr[0], (OP_ISDU_IN_PROCESSDATALENGTH - 1), 0);
+            }
         }
 
         IOL_ENABLE;
@@ -411,7 +471,32 @@ void IOL_State_OP (void)
     {
         if (IOL_Commchannel_value == IOL_Channel_ISDU)
         {
-            device_ProcessDataOut_arr[OP_ISDU_OUT_PROCESSDATALENGTH - 1] = PreOP_CKS_GetChecksum(&device_ProcessDataOut_arr[0], OP_ISDU_OUT_PROCESSDATALENGTH - 1, 0);
+            if (uart1_rx_IDLE_buf[OP_ISDU_IN_PROCESSDATALENGTH - 1] == 0x93) // ISDU Req
+            {
+                if (uart1_rx_IDLE_buf[OP_ISDU_IN_PROCESSDATALENGTH] == 0x12) // Index : 18.  Product Name
+                {
+                    IOL_OP_PD_Req_ProductName = 1;
+                }
+                else if (uart1_rx_IDLE_buf[OP_ISDU_IN_PROCESSDATALENGTH] == 0x15) // Index : 20. Serial number
+                {
+                    IOL_OP_PD_Req_SerialNumber = 1;
+                }
+                device_ProcessDataOut_arr[OP_ISDU_OUT_PROCESSDATALENGTH - 1] = PreOP_CKS_GetChecksum(&device_ProcessDataOut_arr[0], OP_ISDU_OUT_PROCESSDATALENGTH - 1, 0);
+            }
+            else
+            {
+                if ((uart1_rx_IDLE_buf[OP_ISDU_IN_PROCESSDATALENGTH - 1] == 0x81) && (IOL_OP_PD_Req_ProductName == 1))   // Product Name CHKPDU 0x81 0x00 .
+                {
+                    IOL_OP_PD_Req_ProductName = 0;
+                    IOL_OP_PD_Req_ProductName_Chkpdu = 1;
+                }
+                else if ((uart1_rx_IDLE_buf[OP_ISDU_IN_PROCESSDATALENGTH - 1] == 0x86) && (IOL_OP_PD_Req_SerialNumber == 1))   // Serial Number CHKPDU 0x86 0x00 .
+                {
+                    IOL_OP_PD_Req_SerialNumber = 0;
+                    IOL_OP_PD_Req_SerialNumber_Chkpdu = 1;
+                }
+                device_ProcessDataOut_arr[OP_ISDU_OUT_PROCESSDATALENGTH - 1] = PreOP_CKS_GetChecksum(&device_ProcessDataOut_arr[0], OP_ISDU_OUT_PROCESSDATALENGTH - 1, 0);
+            }
         }
 
         IOL_ENABLE;
