@@ -20,17 +20,37 @@
 /* Configure GPIO                                                             */
 /*----------------------------------------------------------------------------*/
 
-static uint8_t IOL_Page1_SeqValue[13] = {0x49, 0x49, 0x2b, 0x11, 0x8c, 0x88, 0xff, 0xff, 0x00, 0x04, 0x5e, 0x00, 0x00};
+static uint8_t IOL_Page1_SeqValue[13] = {0x49, 0x49, 0x2b, 0x11, 0x83, 0x83, 0xff, 0xff, 0x00, 0x04, 0x5e, 0x00, 0x00};
 static uint8_t IOL_PreOP_Packet[8][8] = {
-                                        {0x81, 0x54, 0xff, 0x91, 0x00, 0x00, 0x00, 0x00},
-                                        {0x54, 0xff, 0x91, 0x00, 0x00, 0x00, 0x00, 0x00},
-                                        {0xff, 0x91, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-                                        {0x91, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-                                        {0xd1, 0x13, 0x46, 0x33, 0x30, 0x36, 0x30, 0x32},
-                                        {0x35, 0x37, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-                                        {0x00, 0x00, 0xb1, 0x00, 0x00, 0x00, 0x00, 0x00},
-                                        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+                                        {0x81, 0x54, 0xff, 0x91, 0x00, 0x00, 0x00, 0x00}, // R Diag
+                                        {0x54, 0xff, 0x91, 0x00, 0x00, 0x00, 0x00, 0x00}, // R Diag
+                                        {0xff, 0x91, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // R Diag
+                                        {0x91, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // R Diag
+                                        {0xd1, 0x13, 0x46, 0x33, 0x30, 0x36, 0x30, 0x32}, // R ISDU
+                                        {0x35, 0x37, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // R ISDU
+                                        {0x00, 0x00, 0xb1, 0x00, 0x00, 0x00, 0x00, 0x00}, // R ISDU
+                                        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}  // R ISDU
                                         };
+
+static uint8_t IOL_OP_ProductName[OP_ISDU_OD_LENGTH][OP_ISDU_PRODUCTNAME_LENGTH] = {
+    {0x53, 0x65},
+    {0x65, 0x6e},
+    {0x67, 0x72},
+    {0x69, 0x70},
+    {0x2d, 0x49},
+    {0x4f, 0x4c},
+    {0x2d, 0x47},
+    {0x72, 0x69},
+    {0x70, 0x70},
+    {0x65, 0x72},
+    {0x2d, 0x30},
+    {0x31, 0x00}
+};
+
+uint8_t IOL_OP_ProcessData_WriteRequest_Flag = 0;
+
+uint8_t ProcessDataIn_cnt = 0;
+uint8_t ProcessDataOut_cnt = 0;
 
 uint8_t IOL_RX_CONTINUE_FLAG = 0;
 
@@ -303,24 +323,103 @@ static uint8_t PreOP_CKS_GetChecksum (const uint8_t * pData, uint8_t length, uin
         
         return eventbitset | ck6;
     }
+}
 
-    #if 0
-    //Section A.1.6
-    uint8_t bit5 = ((ck8 >> 7) & 1U) ^ ((ck8 >> 5) & 1U) ^ ((ck8 >> 3) & 1U) ^ ((ck8 >> 1) & 1U);
-    uint8_t bit4 = ((ck8 >> 6) & 1U) ^ ((ck8 >> 4) & 1U) ^ ((ck8 >> 2) & 1U) ^ (ck8 & 1U);
-    uint8_t bit3 = ((ck8 >> 7) & 1U) ^ ((ck8 >> 6) & 1U);
-    uint8_t bit2 = ((ck8 >> 5) & 1U) ^ ((ck8 >> 4) & 1U);
-    uint8_t bit1 = ((ck8 >> 3) & 1U) ^ ((ck8 >> 2) & 1U);
-    uint8_t bit0 = ((ck8 >> 1) & 1U) ^ ((ck8 & 1U));
-    uint8_t ck6 =   bit5 << 5 |
-                    bit4 << 4 |
-                    bit3 << 3 |
-                    bit2 << 2 |
-                    bit1 << 1 |
-                    bit0;
+// I-Service 분석
+uint8_t IOL_ISDU_GetIservice (uint8_t * pdata)
+{
+    uint8_t iservice = 0;
+
+    iservice = *pdata >> 4;
+
+    switch (iservice)
+    {
+    case 0x09:
+    case 0x0A:
+    case 0x0B:
+
+        break;
     
-    return eventbitset | ck6;
-    #endif
+    default:
+        break;
+    }
+    return ;
+}
+
+uint8_t IOL_ISDU_GetLength (uint8_t * pData)
+{
+    return ;
+}
+
+uint8_t IOL_ISDU_GetIndex (uint8_t * pData)
+{
+    return;
+}
+
+uint8_t IOL_ISDU_GetCHKPDU (uint8_t * pData)
+{
+    return ;
+}
+
+// 요청받은 OD 데이터 분석
+uint8_t IOL_Receive_Request_OD (uint8_t *pData)
+{
+    uint8_t OD_IService = 0;
+    uint8_t OD_length = 0;
+    uint8_t OD_index = 0;
+    uint8_t OD_CHKPDU = 0;
+    
+    return ;
+}
+
+// 응답할 OD 데이터패킷 생성
+uint8_t IOL_MakePacket_Response_OD (uint8_t * pData)
+{
+    return ;
+}
+
+// if (stateIOLseq == IOL_OP)
+void IOL_State_OP (void)
+{
+    uint8_t i, j = 0;
+    uint8_t IOL_Commchannel_value = 0;
+    
+    static uint8_t device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH]; // + 1   CKS
+    static uint8_t device_ProcessDataOut_arr[OP_ISDU_OUT_PROCESSDATALENGTH];
+
+    // static uint8_t preop_data_arr[PREOP_DATA_LENGTH + 1] = {0}; // + 1   CKS 
+    // uint8_t Page_Write_ChecksumValue[0] = {0};
+
+    IOL_Commchannel_value = Print_MC_CommunicationChannel(uart1_rx_IDLE_buf[0]);
+    // uint8_t Page_Write_ChecksumValue[1] = {0};
+
+    if (IOL_PreOP_ReadWriteCheck() == IOL_RW_Read)
+    {
+        if (IOL_Commchannel_value == IOL_Channel_ISDU)
+        {
+            device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH - 2] = ProcessDataIn_cnt++; // Test cnt Value 
+            device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH - 1] = PreOP_CKS_GetChecksum(&device_ProcessDataIn_arr[0], (OP_ISDU_IN_PROCESSDATALENGTH - 1), 0);
+        }
+
+        IOL_ENABLE;
+        if (HAL_UART_Transmit_IT(&huart1, device_ProcessDataIn_arr, OP_ISDU_IN_PROCESSDATALENGTH) != HAL_OK)
+        {
+            Error_Handler();
+        }
+    }
+    else if (IOL_PreOP_ReadWriteCheck() == IOL_RW_Write)
+    {
+        if (IOL_Commchannel_value == IOL_Channel_ISDU)
+        {
+            device_ProcessDataOut_arr[OP_ISDU_OUT_PROCESSDATALENGTH - 1] = PreOP_CKS_GetChecksum(&device_ProcessDataOut_arr[0], OP_ISDU_OUT_PROCESSDATALENGTH - 1, 0);
+        }
+
+        IOL_ENABLE;
+        if (HAL_UART_Transmit_IT(&huart1, device_ProcessDataOut_arr, OP_ISDU_OUT_PROCESSDATALENGTH) != HAL_OK)
+        {
+            Error_Handler();
+        }
+    }
 }
 
 // if (stateIOLseq == IOL_PreOP)
@@ -373,6 +472,12 @@ void IOL_State_PreOP (void)
         else
         {
             preop_data_arr[0] = PreOP_CKS_GetChecksum(&preop_data_arr[0], 0, 0);
+            
+            //Master Command to OP.
+            if(uart1_rx_IDLE_buf[2] == 0x99)
+            {
+                stateIOLseq = IOL_OP;
+            }
         }
 
         IOL_ENABLE;
@@ -380,7 +485,6 @@ void IOL_State_PreOP (void)
         {
             Error_Handler();
         }
-
     }
 }
 
@@ -471,9 +575,15 @@ void IOL_StartUp_Seq_Page (uint16_t size)
             
         }
     }
+    // PreOperate Mode
     else if (stateIOLseq == IOL_PreOP)
     {
         IOL_State_PreOP();
+    }
+    // Operate Mode
+    else if (stateIOLseq == IOL_OP)
+    {
+        IOL_State_OP();
     }
 }
 

@@ -108,11 +108,20 @@ typedef enum
   IOL_Channel_ISDU
 } IOL_CommChannel;
 
-#define MAX_RX_DATA             1000
+#define MAX_RX_DATA                   1000
 
-#define MAX_MSEQ                100
+#define MAX_MSEQ                      100
 
-#define PREOP_DATA_LENGTH       8
+#define PREOP_DATA_LENGTH             8
+
+#define OP_ISDU_PD_LENGTH             4
+#define OP_ISDU_OD_LENGTH             2
+#define OP_ISDU_CKS_LENGTH            1
+#define OP_ISDU_PRODUCTNAME_LENGTH    23
+
+#define OP_ISDU_IN_PROCESSDATALENGTH    (OP_ISDU_OD_LENGTH + OP_ISDU_PD_LENGTH + OP_ISDU_CKS_LENGTH)
+#define OP_ISDU_OUT_PROCESSDATALENGTH   (OP_ISDU_PD_LENGTH + OP_ISDU_CKS_LENGTH)
+
 // #define MAX_MSEQ                1000
 extern  MSEQ_t mseq[MAX_MSEQ];
 
