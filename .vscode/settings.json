@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "main.h": "c",
-        "user.h": "c"
+        "user.h": "c",
+        "user_uart_proc.h": "c"
     }
 }

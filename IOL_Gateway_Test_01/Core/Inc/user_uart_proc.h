@@ -32,6 +32,7 @@ extern "C" {
 #define CHECKSUM_SEEDVALUE        0x52
 /* USER CODE BEGIN Prototypes */
 extern uint16_t mseq_cnt;
+extern uint8_t Test_M2D_TempValue;
 
 typedef struct
 {
@@ -67,13 +68,13 @@ typedef struct MC_Communication_channel
   uint8_t * MC_Com_Ch_3;
 } MC_Communication_channel_t;
 
-MC_Communication_channel_t CommunicationChannel = 
-{
-  .MC_Com_Ch_0 = "Process",
-  .MC_Com_Ch_1 = "Page",
-  .MC_Com_Ch_2 = "Diagnosis",
-  .MC_Com_Ch_3 = "ISDU",
-};
+// MC_Communication_channel_t CommunicationChannel = 
+// {
+//   .MC_Com_Ch_0 = "Process",
+//   .MC_Com_Ch_1 = "Page",
+//   .MC_Com_Ch_2 = "Diagnosis",
+//   .MC_Com_Ch_3 = "ISDU",
+// };
 
 typedef struct Mseq_Checksum
 {
@@ -81,11 +82,11 @@ typedef struct Mseq_Checksum
   uint8_t * Checksum_Error;
 } Mseq_Checksum_t;
 
-Mseq_Checksum_t MseqChecksum = 
-{
-  .Checksum_Pass = "Pass",
-  .Checksum_Error = "Error",
-};
+// Mseq_Checksum_t MseqChecksum = 
+// {
+//   .Checksum_Pass = "Pass",
+//   .Checksum_Error = "Error",
+// };
 
 typedef enum
 {
@@ -107,6 +108,32 @@ typedef enum
   IOL_Channel_Diagnosis,
   IOL_Channel_ISDU
 } IOL_CommChannel;
+
+typedef struct 
+{
+  uint8_t Page_1_0_MasterCommand;
+  uint8_t Page_1_1_MasterCycleTime;
+  uint8_t Page_1_2_MinCycleTime;
+  uint8_t Page_1_3_MSeqCapability;
+  uint8_t Page_1_4_RevisionID;
+
+  uint8_t Page_1_5_ProcessDataIn;
+  uint8_t Page_1_6_ProcessDataOut;
+  
+  uint8_t Page_1_7_VendorID1;
+  uint8_t Page_1_8_VendorID2;
+  
+  uint8_t Page_1_9_DeviceID1;
+  uint8_t Page_1_10_DeviceID2;
+  uint8_t Page_1_11_DeviceID3;
+
+  uint8_t Page_1_12_FunctionID1;
+  uint8_t Page_1_13_FunctionID2;
+
+  uint8_t Page_1_14_Reserved1;
+  uint8_t Page_1_15_SystemCommand;
+} DirectParameterPage1_t;
+
 
 #define MAX_RX_DATA                   1000
 

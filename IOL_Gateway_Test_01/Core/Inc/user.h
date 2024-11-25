@@ -104,6 +104,7 @@ extern void User_Toggle_Led (void);
 
 extern void BootMessagePrint (void);
 extern void GetClockSourcePrint (void);
+extern void ProcessDataIn_IncreaseCntValue (void);
 
 #define quedata_arraylength           1000
 

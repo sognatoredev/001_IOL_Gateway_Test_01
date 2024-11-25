@@ -15,6 +15,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "user.h"
 
+// #include "user_uart_proc.
+
 // #include "queue.h"
 // #include <stdint.h>
 /*******************************************************************************
@@ -29,9 +31,12 @@
 /*---- context ---------------------------------------------------------------*/
 /*---- function prototypes ---------------------------------------------------*/
 /*---- data declarations -----------------------------------------------------*/
+#include "user_uart_proc.h"
 
 uint32_t TIM1_CNT_1 = 0;
 uint32_t TIM1_CNT_2 = 0;
+
+uint8_t ProcessDataIn_cnt = 0;
 
 uint16_t queDataNum = 0;
 
@@ -69,6 +74,17 @@ void User_Toggle_Led (void)
 
         // HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_14);
         LED_ALL_TOGGLE;
+    }
+}
+
+void ProcessDataIn_IncreaseCntValue (void)
+{
+    if ( TIM1_CNT_2 >= 1000)
+    {
+        TIM1_CNT_2 = 0;
+        ProcessDataIn_cnt++;
+
+        printf("Master to Device Temp Value :   %d\r\n", Test_M2D_TempValue);
     }
 }
 

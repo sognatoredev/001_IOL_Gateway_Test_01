@@ -20,6 +20,9 @@
 /* Configure GPIO                                                             */
 /*----------------------------------------------------------------------------*/
 
+DirectParameterPage1_t DirectParameterPage1;
+
+static uint8_t IOL_ISDUPage_value[16] = { 0 };
 static uint8_t IOL_Page1_SeqValue[13] = {0x49, 0x49, 0x2b, 0x11, 0x83, 0x83, 0xff, 0xff, 0x00, 0x04, 0x5e, 0x00, 0x00};
 static uint8_t IOL_PreOP_Packet[8][8] = {
                                         {0x81, 0x54, 0xff, 0x91, 0x00, 0x00, 0x00, 0x00}, // R Diag
@@ -70,10 +73,12 @@ uint8_t IOL_OP_PD_Req_ProductName_Chkpdu = 0;
 uint8_t IOL_OP_PD_Req_SerialNumber_Chkpdu = 0;
 uint8_t IOL_OP_OD_Res_cnt = 0;
 
-uint8_t ProcessDataIn_cnt = 0;
+extern uint8_t ProcessDataIn_cnt;
 uint8_t ProcessDataOut_cnt = 0;
 
 uint8_t IOL_RX_CONTINUE_FLAG = 0;
+
+uint8_t Test_M2D_TempValue = 0;
 
 // static uint8_t IOL_Page1_SeqValue[13] = {0x0e, 0x0e, 0x2b, 0x11, 0x8c, 0x88, 0xff, 0xff, 0x00, 0x04, 0x5e, 0x00, 0x00};
 static uint8_t IOL_Page1_Packet[2] = {0};
@@ -81,6 +86,8 @@ static uint8_t IOL_Checksum_SeedValue = 0x52;
 
 static uint8_t Page1_seq = 0;
 static uint8_t PreOP_seq_cnt = 0;
+
+
 
 static uint8_t Decode_CKS_EventFlag (uint8_t Data);
 static uint8_t Decode_MC_ReadWrite (uint8_t Data);
@@ -93,6 +100,20 @@ MSEQ_t mseq[MAX_MSEQ];
 StateIOLSeq stateIOLseq;
 IOL_CommChannel IOL_commchannel;
 IOL_RW_Access IOL_rw_access;
+
+MC_Communication_channel_t CommunicationChannel = 
+{
+  .MC_Com_Ch_0 = "Process",
+  .MC_Com_Ch_1 = "Page",
+  .MC_Com_Ch_2 = "Diagnosis",
+  .MC_Com_Ch_3 = "ISDU",
+};
+
+Mseq_Checksum_t MseqChecksum = 
+{
+  .Checksum_Pass = "Pass",
+  .Checksum_Error = "Error",
+};
 
 uint8_t ck6 = 0;
 
@@ -273,6 +294,34 @@ void Verification_CKTChecksum (void)
     // printf(" Checksum Pass : %d\r\n", ChecksumTorF);
 }
 
+// 디바이스의 DirectParameter Page1 에 대한 초기값 생성
+void DirectParameter_Page1Data_Init (void)
+{
+    uint8_t i = 1;
+
+    DirectParameterPage1.Page_1_0_MasterCommand = 0x00;
+    DirectParameterPage1.Page_1_1_MasterCycleTime = 0x22;
+    DirectParameterPage1.Page_1_2_MinCycleTime = IOL_Page1_SeqValue[i++];
+    DirectParameterPage1.Page_1_3_MSeqCapability = IOL_Page1_SeqValue[i++];
+    DirectParameterPage1.Page_1_4_RevisionID = IOL_Page1_SeqValue[i++];
+
+    DirectParameterPage1.Page_1_5_ProcessDataIn = IOL_Page1_SeqValue[i++];
+    DirectParameterPage1.Page_1_6_ProcessDataOut = IOL_Page1_SeqValue[i++];
+    
+    DirectParameterPage1.Page_1_7_VendorID1 = IOL_Page1_SeqValue[i++];
+    DirectParameterPage1.Page_1_8_VendorID2 = IOL_Page1_SeqValue[i++];
+    
+    DirectParameterPage1.Page_1_9_DeviceID1 = IOL_Page1_SeqValue[i++];
+    DirectParameterPage1.Page_1_10_DeviceID2 = IOL_Page1_SeqValue[i++];
+    DirectParameterPage1.Page_1_11_DeviceID3 = IOL_Page1_SeqValue[i++];
+    
+    DirectParameterPage1.Page_1_12_FunctionID1 = IOL_Page1_SeqValue[i++];
+    DirectParameterPage1.Page_1_13_FunctionID2 = IOL_Page1_SeqValue[i++];
+
+    DirectParameterPage1.Page_1_14_Reserved1 = 0x00;
+    DirectParameterPage1.Page_1_15_SystemCommand = 0x00;
+}
+
 // PreOP Mode R/W 체크
 static uint8_t IOL_PreOP_ReadWriteCheck (void)
 {
@@ -405,6 +454,22 @@ void IOL_PD_Buffer_Clear (void)
     memset(device_ProcessDataOut_arr, 0, sizeof(device_ProcessDataOut_arr));
 }
 
+void IOL_ConnectToIFM_ReadDP (void)
+{
+    uint8_t i, j = 0;
+    uint8_t setpage1first[2] = {0x00, 0x22};
+    // uint8_t Pagevalue[16] = { 0 };
+
+    for (i = 2; i < 16; i++)
+    {
+        for(j = 0; j < 2; j++)
+        {
+            IOL_ISDUPage_value[j] = setpage1first[j];
+        }
+        IOL_ISDUPage_value[i] = IOL_Page1_SeqValue[i - 1];
+    }
+}
+
 // if (stateIOLseq == IOL_OP)
 void IOL_State_OP (void)
 {
@@ -456,9 +521,26 @@ void IOL_State_OP (void)
             }
             else
             {
-                device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH - 2] = ProcessDataIn_cnt++; // Test cnt Value 
+                // device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH - 2] = ProcessDataIn_cnt++; // Test cnt Value 
+                device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH - 2] = ProcessDataIn_cnt; // Test cnt Value 
                 device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH - 1] = PreOP_CKS_GetChecksum(&device_ProcessDataIn_arr[0], (OP_ISDU_IN_PROCESSDATALENGTH - 1), 0);
             }
+        }
+        else if (IOL_Commchannel_value == IOL_Channel_Page)
+        {
+            IOL_ConnectToIFM_ReadDP();
+
+            device_ProcessDataIn_arr[0] = IOL_ISDUPage_value[IOL_OP_OD_Res_cnt];
+            device_ProcessDataIn_arr[1] = IOL_ISDUPage_value[IOL_OP_OD_Res_cnt + 1];
+            IOL_OP_OD_Res_cnt++;
+
+            if (IOL_OP_OD_Res_cnt >= 16)
+            {
+                IOL_OP_PD_Req_SerialNumber_Chkpdu = 0;
+                IOL_OP_OD_Res_cnt = 0;
+            }
+
+            device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH - 1] = PreOP_CKS_GetChecksum(&device_ProcessDataIn_arr[0], (OP_ISDU_IN_PROCESSDATALENGTH - 1), 0);
         }
 
         IOL_ENABLE;
@@ -496,6 +578,17 @@ void IOL_State_OP (void)
                     IOL_OP_PD_Req_SerialNumber_Chkpdu = 1;
                 }
                 device_ProcessDataOut_arr[OP_ISDU_OUT_PROCESSDATALENGTH - 1] = PreOP_CKS_GetChecksum(&device_ProcessDataOut_arr[0], OP_ISDU_OUT_PROCESSDATALENGTH - 1, 0);
+            }
+        }
+        else if (IOL_Commchannel_value == IOL_Channel_Page)  // Page Write.
+        {
+            if (uart1_rx_IDLE_buf[OP_ISDU_IN_PROCESSDATALENGTH - 1] == 0x98) // Master Command - ProcessDataOutputOperatre.
+            {
+                device_ProcessDataOut_arr[OP_ISDU_OUT_PROCESSDATALENGTH - 1] = PreOP_CKS_GetChecksum(&device_ProcessDataOut_arr[0], OP_ISDU_OUT_PROCESSDATALENGTH - 1, 0);
+            }
+            else
+            {
+                
             }
         }
 
@@ -670,6 +763,10 @@ void IOL_StartUp_Seq_Page (uint16_t size)
     {
         IOL_State_OP();
     }
+
+    #if 1 // debug Test 
+    Test_M2D_TempValue = uart1_rx_IDLE_buf[3];
+    #endif
 }
 
 #if 1
