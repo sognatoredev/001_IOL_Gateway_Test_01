@@ -1,0 +1,13 @@
+../Core/Src/IOL_Base.c:28:16:Decode_MC_ReadWrite	3
+../Core/Src/IOL_Base.c:47:16:Decode_MC_CommunicationChannel	5
+../Core/Src/IOL_Base.c:71:16:Decode_MC_Address	1
+../Core/Src/IOL_Base.c:80:16:Decode_CKT_Type	1
+../Core/Src/IOL_Base.c:89:16:Decode_CKT_Checksum	1
+../Core/Src/IOL_Base.c:98:16:Decode_CKS_GetChecksum	2
+../Core/Src/IOL_Base.c:126:17:IOL_StartUp_Read_MakePacket	1
+../Core/Src/IOL_Base.c:136:17:IOL_StartUp_Write_MakePacket	1
+../Core/Src/IOL_Base.c:145:16:IOL_State_StartUp	5
+../Core/Src/IOL_Base.c:182:16:IOL_ISDU_Process	2
+../Core/Src/IOL_Base.c:201:9:IOL_Parse_Rx_data	1
+../Core/Src/IOL_Base.c:213:16:IOL_MC_CommunicationChannel	1
+../Core/Src/IOL_Base.c:221:6:IOL_Print_ParsingM2Ddata	1

@@ -492,9 +492,9 @@ void IOL_State_OP (void)
             if (IOL_OP_PD_Req_ProductName_Chkpdu == 1) // Product Name 요청이 있으면.
             {
                 // IOL_OP_PD_Req_ProductName = 0;
-                device_ProcessDataIn_arr[0] = IOL_OP_ProductName[IOL_OP_OD_Res_cnt][0];
-                device_ProcessDataIn_arr[1] = IOL_OP_ProductName[IOL_OP_OD_Res_cnt][1];
-                IOL_OP_OD_Res_cnt++;
+                device_ProcessDataIn_arr[0] = IOL_OP_ProductName[IOL_OP_OD_Res_cnt][0];   // OD 데이터를  Index에 대한 응답 ISDU 구조의 사이즈에 맞게 나눠서 보내기 위함  
+                device_ProcessDataIn_arr[1] = IOL_OP_ProductName[IOL_OP_OD_Res_cnt][1];   // 현재 씬그립 디바이스의 IODD는 2 octet.
+                IOL_OP_OD_Res_cnt++;        // ISDU 요청에 대한 Index 응답의 사이즈에 맞게 나눠서 보내기 위한 카운트값.
 
                 if (IOL_OP_OD_Res_cnt >= 13)
                 {
@@ -761,6 +761,7 @@ void IOL_StartUp_Seq_Page (uint16_t size)
     // Operate Mode
     else if (stateIOLseq == IOL_OP)
     {
+        IOL_Parse_Rx_data(uart1_rx_IDLE_buf);
         IOL_State_OP();
     }
 

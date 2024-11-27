@@ -153,6 +153,8 @@ typedef struct
 // #define MAX_MSEQ                1000
 extern  MSEQ_t mseq[MAX_MSEQ];
 
+extern StateIOLSeq stateIOLseq;
+
 extern void UART_RX_BufferClear (void);
 extern void Mseq_Display_PacketFrame (uint16_t cnt);
 

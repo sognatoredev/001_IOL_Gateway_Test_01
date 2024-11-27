@@ -71,7 +71,6 @@ void User_Toggle_Led (void)
     if (TIM1_CNT_1 >= 1000)
     {
         TIM1_CNT_1 = 0;
-
         // HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_14);
         LED_ALL_TOGGLE;
     }
@@ -85,6 +84,7 @@ void ProcessDataIn_IncreaseCntValue (void)
         ProcessDataIn_cnt++;
 
         printf("Master to Device Temp Value :   %d\r\n", Test_M2D_TempValue);
+        IOL_Print_ParsingM2Ddata();
     }
 }
 
