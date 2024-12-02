@@ -1,0 +1,6 @@
+../Core/Src/IOL_ISDU.c:25:16:IOL_Get_ISDU_Iservice	1
+../Core/Src/IOL_ISDU.c:39:16:IOL_Get_ISDU_ExtLength	1
+../Core/Src/IOL_ISDU.c:49:16:IOL_Get_ISDU_Length	2
+../Core/Src/IOL_ISDU.c:74:16:IOL_Get_ISDU_ODArr	3
+../Core/Src/IOL_ISDU.c:90:16:IOL_Get_ISDU_Index	2
+../Core/Src/IOL_ISDU.c:106:16:IOL_Set_ISDU_Index	2

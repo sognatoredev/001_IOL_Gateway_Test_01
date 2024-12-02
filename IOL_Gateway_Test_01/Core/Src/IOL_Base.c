@@ -177,7 +177,9 @@ static uint8_t IOL_State_StartUp (void)
     return ;
 }
 
-static uint8_t IOL_State_OPProcess (void)
+
+//  OP 모드 Read 인 경우 Channel 별로 프로세스 처리
+static uint8_t IOL_State_OP_Read_Channel (void)
 {
     switch (IOL_M2D_rxpacket.commchannel)
     {
@@ -199,6 +201,51 @@ static uint8_t IOL_State_OPProcess (void)
         case IOL_Channel_ISDU :
             
 
+            break;
+    }
+
+    return ;
+}
+
+//  OP 모드 Write 인 경우 Channel 별로 프로세스 처리
+static uint8_t IOL_State_OP_Write_Channel (void)
+{
+    switch (IOL_M2D_rxpacket.commchannel)
+    {
+        case IOL_Channel_Process :
+            
+            
+            break;
+
+        case IOL_Channel_Page :
+            
+
+            break;
+
+        case IOL_Channel_Diagnosis :
+            
+
+            break;
+
+        case IOL_Channel_ISDU :
+            
+
+            break;
+    }
+
+    return ;
+}
+
+
+static uint8_t IOL_State_OP_Process (void)
+{
+    switch ( IOL_M2D_rxpacket.rw)
+    {
+        case IOL_RW_Read :
+            IOL_State_OP_Read_Channel();
+            break;
+        case IOL_RW_Write :
+            IOL_State_OP_Write_Channel();
             break;
     }
 

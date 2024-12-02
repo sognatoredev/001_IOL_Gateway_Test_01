@@ -2,6 +2,7 @@
     "files.associations": {
         "main.h": "c",
         "user.h": "c",
-        "user_uart_proc.h": "c"
+        "user_uart_proc.h": "c",
+        "iol_isdu.h": "c"
     }
 }
