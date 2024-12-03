@@ -1,0 +1,3 @@
+../Core/Src/IOL_Page.c:29:6:IOL_ConnectToIFM_Read	16	static
+../Core/Src/IOL_Page.c:45:9:IOL_State_OP_Page_ReadProcess	8	static
+../Core/Src/IOL_Page.c:68:9:IOL_State_OP_Page_WriteProcess	4	static

@@ -1,5 +1,6 @@
 "./Core/Src/IOL_Base.o"
 "./Core/Src/IOL_ISDU.o"
+"./Core/Src/IOL_Page.o"
 "./Core/Src/IOL_startup.o"
 "./Core/Src/dma.o"
 "./Core/Src/gpio.o"

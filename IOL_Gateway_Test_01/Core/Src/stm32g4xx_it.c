@@ -309,28 +309,25 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
   
   if (huart->Instance == USART1)
   {
-    
-    // HAL_UART_DMAStop(&huart1);
-    // HAL_NVIC_DisableIRQ(USART1_IRQn);
-    // HAL_UART_MspDeInit(&huart1);
-    // if ((uart_rx_IDLE_TotalCnt >= 4) && (IOL_RX_CONTINUE_FLAG != 0))
-    // {
-    //   IOL_RX_CONTINUE_FLAG = 0;
-    //   return;
-    // }
+
 
     if (uart_rx_IDLE_TotalCnt >= 3)
     {
-      DEBUG_GPIO_TOGGLE;
+      // DEBUG_GPIO_TOGGLE;
       if (IOL_Rx_IDLEFlag == 1)
       {
         IOL_Rx_IDLEFlag = 0;
       }
       else
       {
+        DEBUG_GPIO_TOGGLE;
         IOL_Rx_IDLEFlag = 1;
         // IOL_PageTest(Size);
-        IOL_StartUp_Seq_Page(Size);
+        IOL_Parse_Rx_data(uart1_rx_IDLE_buf);
+        // IOL_Parse_Rx_data();
+        IOL_StateM_Process();
+        DEBUG_GPIO_TOGGLE;
+        // IOL_StartUp_Seq_Page(Size);
       }
 
     }

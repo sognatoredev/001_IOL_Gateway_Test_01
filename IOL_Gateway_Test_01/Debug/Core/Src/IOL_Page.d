@@ -1,4 +1,4 @@
-Core/Src/IOL_ISDU.o: ../Core/Src/IOL_ISDU.c ../Core/Inc/IOL_ISDU.h \
+Core/Src/IOL_Page.o: ../Core/Src/IOL_Page.c ../Core/Inc/IOL_Page.h \
  ../Core/Inc/main.h ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal.h \
  ../Core/Inc/stm32g4xx_hal_conf.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_rcc.h \
@@ -33,8 +33,9 @@ Core/Src/IOL_ISDU.o: ../Core/Src/IOL_ISDU.c ../Core/Inc/IOL_ISDU.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart_ex.h \
  ../Core/Inc/user.h ../Core/Inc/queue.h ../USB_Device/App/usb_device.h \
  ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h \
- ../USB_Device/Target/usbd_conf.h ../Core/Inc/IOL_Base.h
-../Core/Inc/IOL_ISDU.h:
+ ../USB_Device/Target/usbd_conf.h ../Core/Inc/IOL_ISDU.h \
+ ../Core/Inc/IOL_Base.h
+../Core/Inc/IOL_Page.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal.h:
 ../Core/Inc/stm32g4xx_hal_conf.h:
@@ -73,4 +74,5 @@ Core/Src/IOL_ISDU.o: ../Core/Src/IOL_ISDU.c ../Core/Inc/IOL_ISDU.h \
 ../USB_Device/App/usb_device.h:
 ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h:
 ../USB_Device/Target/usbd_conf.h:
+../Core/Inc/IOL_ISDU.h:
 ../Core/Inc/IOL_Base.h:

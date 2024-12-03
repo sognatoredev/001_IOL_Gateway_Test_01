@@ -7,6 +7,7 @@
 C_SRCS += \
 ../Core/Src/IOL_Base.c \
 ../Core/Src/IOL_ISDU.c \
+../Core/Src/IOL_Page.c \
 ../Core/Src/IOL_startup.c \
 ../Core/Src/dma.c \
 ../Core/Src/gpio.c \
@@ -25,6 +26,7 @@ C_SRCS += \
 OBJS += \
 ./Core/Src/IOL_Base.o \
 ./Core/Src/IOL_ISDU.o \
+./Core/Src/IOL_Page.o \
 ./Core/Src/IOL_startup.o \
 ./Core/Src/dma.o \
 ./Core/Src/gpio.o \
@@ -43,6 +45,7 @@ OBJS += \
 C_DEPS += \
 ./Core/Src/IOL_Base.d \
 ./Core/Src/IOL_ISDU.d \
+./Core/Src/IOL_Page.d \
 ./Core/Src/IOL_startup.d \
 ./Core/Src/dma.d \
 ./Core/Src/gpio.d \
@@ -66,7 +69,7 @@ Core/Src/%.o Core/Src/%.su Core/Src/%.cyclo: ../Core/Src/%.c Core/Src/subdir.mk
 clean: clean-Core-2f-Src
 
 clean-Core-2f-Src:
-	-$(RM) ./Core/Src/IOL_Base.cyclo ./Core/Src/IOL_Base.d ./Core/Src/IOL_Base.o ./Core/Src/IOL_Base.su ./Core/Src/IOL_ISDU.cyclo ./Core/Src/IOL_ISDU.d ./Core/Src/IOL_ISDU.o ./Core/Src/IOL_ISDU.su ./Core/Src/IOL_startup.cyclo ./Core/Src/IOL_startup.d ./Core/Src/IOL_startup.o ./Core/Src/IOL_startup.su ./Core/Src/dma.cyclo ./Core/Src/dma.d ./Core/Src/dma.o ./Core/Src/dma.su ./Core/Src/gpio.cyclo ./Core/Src/gpio.d ./Core/Src/gpio.o ./Core/Src/gpio.su ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/queue.cyclo ./Core/Src/queue.d ./Core/Src/queue.o ./Core/Src/queue.su ./Core/Src/stm32g4xx_hal_msp.cyclo ./Core/Src/stm32g4xx_hal_msp.d ./Core/Src/stm32g4xx_hal_msp.o ./Core/Src/stm32g4xx_hal_msp.su ./Core/Src/stm32g4xx_it.cyclo ./Core/Src/stm32g4xx_it.d ./Core/Src/stm32g4xx_it.o ./Core/Src/stm32g4xx_it.su ./Core/Src/syscalls.cyclo ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.cyclo ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32g4xx.cyclo ./Core/Src/system_stm32g4xx.d ./Core/Src/system_stm32g4xx.o ./Core/Src/system_stm32g4xx.su ./Core/Src/tim.cyclo ./Core/Src/tim.d ./Core/Src/tim.o ./Core/Src/tim.su ./Core/Src/usart.cyclo ./Core/Src/usart.d ./Core/Src/usart.o ./Core/Src/usart.su ./Core/Src/user.cyclo ./Core/Src/user.d ./Core/Src/user.o ./Core/Src/user.su ./Core/Src/user_uart_proc.cyclo ./Core/Src/user_uart_proc.d ./Core/Src/user_uart_proc.o ./Core/Src/user_uart_proc.su
+	-$(RM) ./Core/Src/IOL_Base.cyclo ./Core/Src/IOL_Base.d ./Core/Src/IOL_Base.o ./Core/Src/IOL_Base.su ./Core/Src/IOL_ISDU.cyclo ./Core/Src/IOL_ISDU.d ./Core/Src/IOL_ISDU.o ./Core/Src/IOL_ISDU.su ./Core/Src/IOL_Page.cyclo ./Core/Src/IOL_Page.d ./Core/Src/IOL_Page.o ./Core/Src/IOL_Page.su ./Core/Src/IOL_startup.cyclo ./Core/Src/IOL_startup.d ./Core/Src/IOL_startup.o ./Core/Src/IOL_startup.su ./Core/Src/dma.cyclo ./Core/Src/dma.d ./Core/Src/dma.o ./Core/Src/dma.su ./Core/Src/gpio.cyclo ./Core/Src/gpio.d ./Core/Src/gpio.o ./Core/Src/gpio.su ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/queue.cyclo ./Core/Src/queue.d ./Core/Src/queue.o ./Core/Src/queue.su ./Core/Src/stm32g4xx_hal_msp.cyclo ./Core/Src/stm32g4xx_hal_msp.d ./Core/Src/stm32g4xx_hal_msp.o ./Core/Src/stm32g4xx_hal_msp.su ./Core/Src/stm32g4xx_it.cyclo ./Core/Src/stm32g4xx_it.d ./Core/Src/stm32g4xx_it.o ./Core/Src/stm32g4xx_it.su ./Core/Src/syscalls.cyclo ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.cyclo ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32g4xx.cyclo ./Core/Src/system_stm32g4xx.d ./Core/Src/system_stm32g4xx.o ./Core/Src/system_stm32g4xx.su ./Core/Src/tim.cyclo ./Core/Src/tim.d ./Core/Src/tim.o ./Core/Src/tim.su ./Core/Src/usart.cyclo ./Core/Src/usart.d ./Core/Src/usart.o ./Core/Src/usart.su ./Core/Src/user.cyclo ./Core/Src/user.d ./Core/Src/user.o ./Core/Src/user.su ./Core/Src/user_uart_proc.cyclo ./Core/Src/user_uart_proc.d ./Core/Src/user_uart_proc.o ./Core/Src/user_uart_proc.su
 
 .PHONY: clean-Core-2f-Src
 

@@ -104,7 +104,7 @@ void BootMessagePrint (void)
     sprintf(USB_CdcTxBuffer_FS, " - FW VERSION        : %s\r\n", STR_FW_VER );
     User_CDC_Transmit_FS((uint8_t *) USB_CdcTxBuffer_FS, strlen(USB_CdcTxBuffer_FS));
 
-    sprintf(USB_CdcTxBuffer_FS, " - BUILD TIME        : %s, %s\r\n", __DATE__, __TIME__ );
+    sprintf(USB_CdcTxBuffer_FS, " - BUILD TIME        : %s, %s\r\n", __DATE_`_, __TIME__ );
     User_CDC_Transmit_FS((uint8_t *) USB_CdcTxBuffer_FS, strlen(USB_CdcTxBuffer_FS));
 
     sprintf(USB_CdcTxBuffer_FS, "-------------------------------------------\r\n" );
