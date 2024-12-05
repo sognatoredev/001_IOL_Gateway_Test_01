@@ -15,5 +15,5 @@
 ../Core/Src/IOL_Base.c:378:16:IOL_State_OP_Write_Channel	8	static
 ../Core/Src/IOL_Base.c:407:16:IOL_State_OP_Process	8	static
 ../Core/Src/IOL_Base.c:422:9:IOL_StateM_Process	8	static
-../Core/Src/IOL_Base.c:442:9:IOL_Parse_Rx_data	16	static
-../Core/Src/IOL_Base.c:454:6:IOL_Print_ParsingM2Ddata	24	static
+../Core/Src/IOL_Base.c:444:9:IOL_Parse_Rx_data	16	static
+../Core/Src/IOL_Base.c:456:6:IOL_Print_ParsingM2Ddata	24	static

@@ -22,6 +22,7 @@
 #include "stm32g4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "IOL_ISDU.h"
 // #include "user_uart_proc.h"
 /* USER CODE END Includes */
 
@@ -320,13 +321,13 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
       }
       else
       {
-        DEBUG_GPIO_TOGGLE;
+        // DEBUG_GPIO_TOGGLE;
         IOL_Rx_IDLEFlag = 1;
         // IOL_PageTest(Size);
         IOL_Parse_Rx_data(uart1_rx_IDLE_buf);
         // IOL_Parse_Rx_data();
         IOL_StateM_Process();
-        DEBUG_GPIO_TOGGLE;
+        // DEBUG_GPIO_TOGGLE;
         // IOL_StartUp_Seq_Page(Size);
       }
 
@@ -375,7 +376,10 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
   if (huart->Instance == USART1)
   {
     IOL_DISABLE;
-    IOL_PD_Buffer_Clear();
+    
+    IOL_Clear_PDBuffer();
+    // IOL_PD_Buffer_Clear();
+
     // HAL_UART_MspInit(&huart1);
 
     // HAL_NVIC_EnableIRQ(USART1_IRQn);

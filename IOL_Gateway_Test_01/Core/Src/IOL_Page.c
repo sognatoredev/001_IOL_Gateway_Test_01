@@ -16,14 +16,17 @@
 #include "IOL_Page.h"
 #include "IOL_Base.h"
 
-static uint8_t IOL_ISDUPage_value[16] = { 0 };
+static uint8_t IOL_ISDUPage_value[18] = { 0 };
+// static uint8_t IOL_ISDUPage_value[16] = { 0 };
 static uint8_t IOL_Page1_SeqValue[13] = {0x49, 0x49, 0x2b, 0x11, 0x83, 0x83, 0xff, 0xff, 0x00, 0x04, 0x5e, 0x00, 0x00};
 
 static uint8_t IOL_OP_OD_Page_Res_cnt = 0;
 
 static uint8_t device_Page_OD_arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH] = { 0 };
 
-
+extern uint8_t device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH];
+extern uint8_t device_ProcessDataOut_Arr[IOL_OP_ISDU_OUT_PROCESSDATALENGTH];
+extern uint8_t ProcessDataIn_cnt;
 
 // for 문 수정이 필요. j 카운트 부분이 쓸모없이 중복 실행.
 void IOL_ConnectToIFM_Read (void)
@@ -52,6 +55,7 @@ uint8_t IOL_State_OP_Page_ReadProcess (void)
 
     if (IOL_OP_OD_Page_Res_cnt >= 16)
     {
+        DEBUG_GPIO_TOGGLE; // 디버깅 트리거
         IOL_OP_OD_Page_Res_cnt = 0;
     }
 
@@ -67,5 +71,13 @@ uint8_t IOL_State_OP_Page_ReadProcess (void)
 
 uint8_t IOL_State_OP_Page_WriteProcess (void)
 {
-    
+    device_ProcessDataOut_Arr[IOL_OP_ISDU_OUT_PROCESSDATALENGTH - 2] = ProcessDataIn_cnt; // Test cnt Value 
+    device_ProcessDataOut_Arr[IOL_OP_ISDU_OUT_PROCESSDATALENGTH - 1] = OP_CKS_GetChecksum(&device_ProcessDataOut_Arr[0], IOL_OP_ISDU_OUT_PROCESSDATALENGTH - 1, 0);
+
+    IOL_ENABLE;
+    if (HAL_UART_Transmit_IT(&huart1, device_ProcessDataOut_Arr, IOL_OP_ISDU_OUT_PROCESSDATALENGTH) != HAL_OK)
+    {
+        Error_Handler();
+    }
 }
+

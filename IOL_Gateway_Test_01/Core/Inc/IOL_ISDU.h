@@ -22,11 +22,19 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-#define IOL_OP_ISDU_PD_LENGTH                   4
-#define IOL_OP_ISDU_OD_LENGTH                   2
-#define IOL_OP_ISDU_CKS_LENGTH                  1
-#define IOL_OP_ISDU_PRODUCTNAME_LENGTH          23
-#define IOL_OP_ISDU_SERIALNUMBER_LENGTH         10
+#define IOL_OP_ISDU_PD_LENGTH                               4
+#define IOL_OP_ISDU_OD_LENGTH                               2
+#define IOL_OP_ISDU_CKS_LENGTH                              1
+#define IOL_OP_ISDU_PRODUCTNAME_LENGTH                      23
+#define IOL_OP_ISDU_SERIALNUMBER_LENGTH                     10
+#define IOL_OP_ISDU_APPLICATIONSPECIFICTAG_LENGTH           30
+#define IOL_OP_ISDU_PRODUCTID_LENGTH                        10
+#define IOL_OP_ISDU_EXAMPLEPARAMETER_LENGTH                 10
+#define IOL_OP_ISDU_DEVICESTATUS_LENGTH                     3
+#define IOL_OP_ISDU_DETAILEDDEVICESTATUS_LENGTH             3
+#define IOL_OP_ISDU_VENDORNAME_LENGTH                       34
+#define IOL_OP_ISDU_HWREVISION_LENGTH                       34
+#define IOL_OP_ISDU_FWREVISION_LENGTH                       34
 
 #define IOL_OP_ISDU_IN_PROCESSDATALENGTH          (IOL_OP_ISDU_OD_LENGTH + IOL_OP_ISDU_PD_LENGTH + IOL_OP_ISDU_CKS_LENGTH)
 #define IOL_OP_ISDU_OUT_PROCESSDATALENGTH         (IOL_OP_ISDU_PD_LENGTH + IOL_OP_ISDU_CKS_LENGTH)
@@ -74,6 +82,7 @@ typedef struct IOL_ISDUPacket
     uint8_t isdu_od_cnt;
     uint8_t isdu_od_rxcplt;
     uint8_t isdu_od_writereq_flag;
+    uint8_t isdu_od_writeReq8bit_flag;
 } IOL_ISDUPacket_t;
 
 // Index Look Up Table
@@ -107,7 +116,9 @@ typedef enum
     IOL_Index_DetailedDeviceStatus,     // 0x25
     
     IOL_Index_ProcessDataInput = 40,    // 0x28
-    IOL_Index_ProcessDataOutput         // 0x29
+    IOL_Index_ProcessDataOutput,         // 0x29
+
+    IOL_Index_PreferredIndex = 64       //0x40
 } IOL_IndexTable;
 
 typedef enum
@@ -129,13 +140,13 @@ typedef enum
 
 typedef enum
 {
-    IOL_Iservice_M_Wreq8bit = 0x10,
+    IOL_Iservice_M_Wreq8bit = 0x01,
     IOL_Iservice_M_Wreq8bitsubindex,
     IOL_Iservice_M_Wreq16bitsubindex,
     IOL_Iservice_D_WresM,
     IOl_Iservice_D_WresP,
 
-    IOL_Iservice_M_Rreq8bit = 0x90,
+    IOL_Iservice_M_Rreq8bit = 0x09,
     IOL_Iservice_M_Rreq8bitsubindex,
     IOL_Iservice_M_Rreq16bitsubindex,
     IOL_Iservice_D_RresM,
@@ -144,6 +155,7 @@ typedef enum
 
 extern IOL_IndexTable IOL_indextable;
 extern uint8_t IOL_Get_ISDU_WR_ODArr (uint8_t * pData);
+extern void IOL_Clear_PDBuffer (void);
 /* USER CODE BEGIN Prototypes */
 
 #ifdef __cplusplus

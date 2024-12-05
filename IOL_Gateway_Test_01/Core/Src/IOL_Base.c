@@ -385,7 +385,7 @@ static uint8_t IOL_State_OP_Write_Channel (void)
             break;
 
         case IOL_Channel_Page :
-            
+            IOL_State_OP_Page_WriteProcess();
 
             break;
 
@@ -434,7 +434,9 @@ uint8_t IOL_StateM_Process (void)
             IOL_State_OP_Process();
             break;
     }
-
+    #if 1 // debug Test 
+    Test_M2D_TempValue = uart1_rx_IDLE_buf[3];
+    #endif
     return ;
 }
 
