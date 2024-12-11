@@ -25,12 +25,12 @@ extern "C" {
 #define IOL_OP_ISDU_PD_LENGTH                               4
 #define IOL_OP_ISDU_OD_LENGTH                               2
 #define IOL_OP_ISDU_CKS_LENGTH                              1
-#define IOL_OP_ISDU_PRODUCTNAME_LENGTH                      23
-#define IOL_OP_ISDU_SERIALNUMBER_LENGTH                     10
-#define IOL_OP_ISDU_APPLICATIONSPECIFICTAG_LENGTH           30
-#define IOL_OP_ISDU_PRODUCTID_LENGTH                        10
-#define IOL_OP_ISDU_EXAMPLEPARAMETER_LENGTH                 10
-#define IOL_OP_ISDU_DEVICESTATUS_LENGTH                     3
+#define IOL_OP_ISDU_PRODUCTNAME_LENGTH                      13
+#define IOL_OP_ISDU_SERIALNUMBER_LENGTH                     5
+#define IOL_OP_ISDU_APPLICATIONSPECIFICTAG_LENGTH           18
+#define IOL_OP_ISDU_PRODUCTID_LENGTH                        6
+#define IOL_OP_ISDU_EXAMPLEPARAMETER_LENGTH                 2
+#define IOL_OP_ISDU_DEVICESTATUS_LENGTH                     2
 #define IOL_OP_ISDU_DETAILEDDEVICESTATUS_LENGTH             3
 #define IOL_OP_ISDU_VENDORNAME_LENGTH                       34
 #define IOL_OP_ISDU_HWREVISION_LENGTH                       34
@@ -40,7 +40,7 @@ extern "C" {
 #define IOL_OP_ISDU_OUT_PROCESSDATALENGTH         (IOL_OP_ISDU_PD_LENGTH + IOL_OP_ISDU_CKS_LENGTH)
 
 
-#define IOL_ISDU_INDEX_DIRECTPARAMETER_PAGE1         0x0000
+#define IOL_ISDU_INDEX_DIRECTPARAMETER_PAGE1        0x0000
 #define IOL_ISDU_INDEX_DIRECTPARAMETER_PAGE2        0x0001
 #define IOL_ISDU_INDEX_SYSTEMCOMMAND                0x0002
 #define IOL_ISDU_INDEX_DATASTORAGEINDEX             0x0003
@@ -77,12 +77,15 @@ typedef struct IOL_ISDUPacket
     uint8_t index;
     uint8_t subindex;
     uint8_t chkpdu;
+
+    uint8_t *isdu_textid;
     
     uint8_t isdu_od[50];
     uint8_t isdu_od_cnt;
     uint8_t isdu_od_rxcplt;
     uint8_t isdu_od_writereq_flag;
     uint8_t isdu_od_writeReq8bit_flag;
+    
 } IOL_ISDUPacket_t;
 
 // Index Look Up Table
@@ -152,6 +155,7 @@ typedef enum
     IOL_Iservice_D_RresM,
     IOL_Iservice_D_RresP
 } IOL_IserviceTable;
+
 
 extern IOL_IndexTable IOL_indextable;
 extern uint8_t IOL_Get_ISDU_WR_ODArr (uint8_t * pData);

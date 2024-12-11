@@ -20,6 +20,33 @@
 IOL_ISDUPacket_t isdudata;
 IOL_IndexTable IOL_indextable;
 
+IOL_ISDUPacket_t ISDU_WritePacketframe[30] = 
+{
+    // [iservice]                   [length]                  [index]                 [subindex]          [chkpdu]
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_directParameter_page1,           0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_directParameter_page2,           0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_Systemcommand,                   0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_Datastorageindex,                0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_DeviceAccessLocks,               0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_ProfileCharacteristic,           0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_PDInputDescriptor,               0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_PDOutputDescriptor,              0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_VendorName,                      0       ,         0          , "Seengrip"   },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_VendorText,                      0       ,         0          , "Seengrip, Inc"  },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_ProductName,                     0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_ProductID,                       0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_ProductText,                     0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_SerialNumber,                    0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_HardwareRevision,                0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_FirmwareRevision,                0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_ApplicationSpecificTag,          0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_FunctionTag,                     0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_LocationTag,                     0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_ProductURI,                      0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_directParameter_page1,           0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_directParameter_page1,           0       ,         0             },
+};
+
 uint8_t extlength_flag = 0;
 uint8_t IOL_OP_ISDU_OD_Res_cnt = 0;
 
@@ -370,19 +397,21 @@ uint8_t IOL_Get_ISDU_RD_ODArr (uint8_t * pData)
     return ;
 }
 
+// IO-Link 송/수신 데이터를 업데이트 및 갱신하기 전 송신완료시 버퍼를 클리어해 준다
 void IOL_Clear_PDBuffer (void)
 {
     memset(device_ProcessDataIn_Arr, 0, sizeof(device_ProcessDataIn_Arr));
     memset(device_ProcessDataOut_Arr, 0, sizeof(device_ProcessDataOut_Arr));
 }
 
+// 응답 데이터 생성
 static void IOL_Make_Resp_ProductName (void)
 {
     device_ProcessDataIn_Arr[0] = IOL_OP_ProductName[IOL_OP_ISDU_OD_Res_cnt][0];   // OD 데이터를  Index에 대한 응답 ISDU 구조의 사이즈에 맞게 나눠서 보내기 위함  
     device_ProcessDataIn_Arr[1] = IOL_OP_ProductName[IOL_OP_ISDU_OD_Res_cnt][1];   // 현재 씬그립 디바이스의 IODD는 2 octet.
     IOL_OP_ISDU_OD_Res_cnt++;        // ISDU 요청에 대한 Index 응답의 사이즈에 맞게 나눠서 보내기 위한 카운트값.
 
-    if (IOL_OP_ISDU_OD_Res_cnt >= 13)
+    if (IOL_OP_ISDU_OD_Res_cnt >= IOL_OP_ISDU_PRODUCTNAME_LENGTH)
     {
         isdudata.isdu_od_writereq_flag = 0;
         IOL_OP_ISDU_OD_Res_cnt = 0;
@@ -398,7 +427,7 @@ static void IOL_Make_Resp_SerialNumber (void)
     IOL_OP_ISDU_OD_Res_cnt++;        // ISDU 요청에 대한 Index 응답의 사이즈에 맞게 나눠서 보내기 위한 카운트값.
 
     // if (IOL_OP_ISDU_OD_Res_cnt >= 10)
-    if (IOL_OP_ISDU_OD_Res_cnt >= 5)
+    if (IOL_OP_ISDU_OD_Res_cnt >= IOL_OP_ISDU_SERIALNUMBER_LENGTH)
     {
         isdudata.isdu_od_writereq_flag = 0;
         IOL_OP_ISDU_OD_Res_cnt = 0;
@@ -413,7 +442,7 @@ static void IOL_Make_Resp_ApplicationSpecificTag (void)
     device_ProcessDataIn_Arr[1] = IOL_OP_ApplicationSpecificTag[IOL_OP_ISDU_OD_Res_cnt][1];   // 현재 씬그립 디바이스의 IODD는 2 octet.
     IOL_OP_ISDU_OD_Res_cnt++;        // ISDU 요청에 대한 Index 응답의 사이즈에 맞게 나눠서 보내기 위한 카운트값.
 
-    if (IOL_OP_ISDU_OD_Res_cnt >= 18)
+    if (IOL_OP_ISDU_OD_Res_cnt >= IOL_OP_ISDU_APPLICATIONSPECIFICTAG_LENGTH)
     {
         isdudata.isdu_od_writereq_flag = 0;
         IOL_OP_ISDU_OD_Res_cnt = 0;
@@ -428,7 +457,7 @@ static void IOL_Make_Resp_ProductID (void)
     device_ProcessDataIn_Arr[1] = IOL_OP_ProductID[IOL_OP_ISDU_OD_Res_cnt][1];   // 현재 씬그립 디바이스의 IODD는 2 octet.
     IOL_OP_ISDU_OD_Res_cnt++;        // ISDU 요청에 대한 Index 응답의 사이즈에 맞게 나눠서 보내기 위한 카운트값.
 
-    if (IOL_OP_ISDU_OD_Res_cnt >= 6)
+    if (IOL_OP_ISDU_OD_Res_cnt >= IOL_OP_ISDU_PRODUCTID_LENGTH)
     {
         isdudata.isdu_od_writereq_flag = 0;
         IOL_OP_ISDU_OD_Res_cnt = 0;
@@ -443,7 +472,7 @@ static void IOL_Make_Resp_ExampleParameter (void)
     device_ProcessDataIn_Arr[1] = IOL_OP_ExampleParameter[IOL_OP_ISDU_OD_Res_cnt][1];   // 현재 씬그립 디바이스의 IODD는 2 octet.
     IOL_OP_ISDU_OD_Res_cnt++;        // ISDU 요청에 대한 Index 응답의 사이즈에 맞게 나눠서 보내기 위한 카운트값.
 
-    if (IOL_OP_ISDU_OD_Res_cnt >= 2)
+    if (IOL_OP_ISDU_OD_Res_cnt >= IOL_OP_ISDU_EXAMPLEPARAMETER_LENGTH)
     {
         isdudata.isdu_od_writereq_flag = 0;
         IOL_OP_ISDU_OD_Res_cnt = 0;
@@ -458,7 +487,7 @@ static void IOL_Make_Resp_DeviceStatus (void)
     device_ProcessDataIn_Arr[1] = IOL_OP_DeviceStatus[IOL_OP_ISDU_OD_Res_cnt][1];   // 현재 씬그립 디바이스의 IODD는 2 octet.
     IOL_OP_ISDU_OD_Res_cnt++;        // ISDU 요청에 대한 Index 응답의 사이즈에 맞게 나눠서 보내기 위한 카운트값.
 
-    if (IOL_OP_ISDU_OD_Res_cnt >= 2)
+    if (IOL_OP_ISDU_OD_Res_cnt >= IOL_OP_ISDU_DEVICESTATUS_LENGTH)
     {
         isdudata.isdu_od_writereq_flag = 0;
         IOL_OP_ISDU_OD_Res_cnt = 0;
@@ -473,7 +502,7 @@ static void IOL_Make_Resp_DetailedDeviceStatus (void)
     device_ProcessDataIn_Arr[1] = IOL_OP_DetailedDeviceStatus[IOL_OP_ISDU_OD_Res_cnt][1];   // 현재 씬그립 디바이스의 IODD는 2 octet.
     IOL_OP_ISDU_OD_Res_cnt++;        // ISDU 요청에 대한 Index 응답의 사이즈에 맞게 나눠서 보내기 위한 카운트값.
 
-    if (IOL_OP_ISDU_OD_Res_cnt >= 3)
+    if (IOL_OP_ISDU_OD_Res_cnt >= IOL_OP_ISDU_DETAILEDDEVICESTATUS_LENGTH)
     {
         isdudata.isdu_od_writereq_flag = 0;
         IOL_OP_ISDU_OD_Res_cnt = 0;
@@ -527,6 +556,27 @@ static void IOL_Make_Resp_FWRevision (void)
     device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1] = OP_CKS_GetChecksum(&device_ProcessDataIn_Arr[0], (IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1), 0);
 }
 
+// 각 index 응답 송신하는 부분을 모듈화하기 위한 함수
+static void IOL_Make_Resp_PDOD (uint8_t * respArray, uint8_t size)
+{
+    uint8_t (* Resp_IndexArray)[IOL_OP_ISDU_OD_LENGTH];
+    uint8_t od_size = 0;
+
+    Resp_IndexArray = respArray;
+    od_size = size;
+
+    device_ProcessDataIn_Arr[0] = Resp_IndexArray[IOL_OP_ISDU_OD_Res_cnt][0];   // OD 데이터를  Index에 대한 응답 ISDU 구조의 사이즈에 맞게 나눠서 보내기 위함  
+    device_ProcessDataIn_Arr[1] = Resp_IndexArray[IOL_OP_ISDU_OD_Res_cnt][1];   // 현재 씬그립 디바이스의 IODD는 2 octet.
+    IOL_OP_ISDU_OD_Res_cnt++;        // ISDU 요청에 대한 Index 응답의 사이즈에 맞게 나눠서 보내기 위한 카운트값.
+
+    if (IOL_OP_ISDU_OD_Res_cnt >= od_size)
+    {
+        isdudata.isdu_od_writereq_flag = 0;
+        IOL_OP_ISDU_OD_Res_cnt = 0;
+    }
+
+    device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1] = OP_CKS_GetChecksum(&device_ProcessDataIn_Arr[0], (IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1), 0);
+}
 
 static void IOL_Make_Resp_default (void)
 {
@@ -587,12 +637,14 @@ uint8_t IOL_State_OP_ISDU_ReadProcess (void)
         switch (isdudata.index)
         {
             case IOL_Index_ProductName :
-                IOL_Make_Resp_ProductName();
+                // IOL_Make_Resp_ProductName();
+                IOL_Make_Resp_PDOD(IOL_OP_ProductName, IOL_OP_ISDU_PRODUCTNAME_LENGTH);
                 break;
 
             case IOL_Index_SerialNumber :
                 DEBUG_GPIO_TOGGLE;
-                IOL_Make_Resp_SerialNumber();
+                // IOL_Make_Resp_SerialNumber();
+                IOL_Make_Resp_PDOD(IOL_OP_SerialNumber, IOL_OP_ISDU_SERIALNUMBER_LENGTH);
                 break;
 
             // case IOL_Index_VendorName :
@@ -602,44 +654,55 @@ uint8_t IOL_State_OP_ISDU_ReadProcess (void)
             // case IOL_Index_ProductText :
             //     break;
             case IOL_Index_ProductID :
-                IOL_Make_Resp_ProductID();
+                // IOL_Make_Resp_ProductID();
+                IOL_Make_Resp_PDOD(IOL_OP_ProductID, IOL_OP_ISDU_PRODUCTID_LENGTH);
                 break;
 
             case IOL_Index_ApplicationSpecificTag :
-                IOL_Make_Resp_ApplicationSpecificTag();
+                // IOL_Make_Resp_ApplicationSpecificTag();
+                IOL_Make_Resp_PDOD(IOL_OP_ApplicationSpecificTag, IOL_OP_ISDU_APPLICATIONSPECIFICTAG_LENGTH);
                 break;
 
             case IOL_Index_FunctionTag :
-                IOL_Make_Resp_ApplicationSpecificTag();
+                // IOL_Make_Resp_ApplicationSpecificTag();
+                IOL_Make_Resp_PDOD(IOL_OP_ApplicationSpecificTag, IOL_OP_ISDU_APPLICATIONSPECIFICTAG_LENGTH);
                 break;
                 
             case IOL_Index_LocationTag :
-                IOL_Make_Resp_ApplicationSpecificTag();
+                // IOL_Make_Resp_ApplicationSpecificTag();
+                IOL_Make_Resp_PDOD(IOL_OP_ApplicationSpecificTag, IOL_OP_ISDU_APPLICATIONSPECIFICTAG_LENGTH);
                 break;
 
             case IOL_Index_PreferredIndex :
                 // DEBUG_GPIO_TOGGLE;
-                IOL_Make_Resp_ExampleParameter();
+                // IOL_Make_Resp_ExampleParameter();
+                IOL_Make_Resp_PDOD(IOL_OP_ExampleParameter, IOL_OP_ISDU_EXAMPLEPARAMETER_LENGTH);
                 break;
 
             case IOL_Index_DeviceStatus :
-                IOL_Make_Resp_DeviceStatus();
+                // IOL_Make_Resp_DeviceStatus();
+                IOL_Make_Resp_PDOD(IOL_OP_DeviceStatus, IOL_OP_ISDU_DEVICESTATUS_LENGTH);
                 break;
 
             case IOL_Index_DetailedDeviceStatus :
-                IOL_Make_Resp_DetailedDeviceStatus();
+                // IOL_Make_Resp_DetailedDeviceStatus();
+                IOL_Make_Resp_PDOD(IOL_OP_DetailedDeviceStatus, IOL_OP_ISDU_DETAILEDDEVICESTATUS_LENGTH);
                 break;
             
             case IOL_Index_VendorName :
-                IOL_Make_Resp_VendorName();
+                // IOL_Make_Resp_VendorName();
+                IOL_Make_Resp_PDOD(IOL_OP_VendorName, IOL_OP_ISDU_VENDORNAME_LENGTH);
                 break;
 
             case IOL_Index_HardwareRevision :
-                IOL_Make_Resp_HWRevision();
+                // IOL_Make_Resp_HWRevision();
+                IOL_Make_Resp_PDOD(IOL_OP_HWRevision, IOL_OP_ISDU_HWREVISION_LENGTH);
                 break;
             
             case IOL_Index_FirmwareRevision :
-                IOL_Make_Resp_FWRevision();
+                // IOL_Make_Resp_FWRevision();
+                IOL_Make_Resp_PDOD(IOL_OP_FWRevision, IOL_OP_ISDU_FWREVISION_LENGTH);
+                break;
         }
         // device_ProcessDataOut_arr[IOL_OP_ISDU_OUT_PROCESSDATALENGTH - 1] = OP_CKS_GetChecksum(&device_ProcessDataOut_arr[0], IOL_OP_ISDU_OUT_PROCESSDATALENGTH - 1, 0); // CKS 생성
     }
