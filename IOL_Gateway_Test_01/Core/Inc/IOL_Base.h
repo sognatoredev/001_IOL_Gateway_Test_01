@@ -22,6 +22,7 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "user.h"
+#include "IOL_ISDU.h"
 
 #define PREOP_DATA_LENGTH             8
 

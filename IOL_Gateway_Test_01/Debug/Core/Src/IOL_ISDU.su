@@ -16,7 +16,7 @@
 ../Core/Src/IOL_ISDU.c:529:13:IOL_Make_Resp_HWRevision	8	static
 ../Core/Src/IOL_ISDU.c:544:13:IOL_Make_Resp_FWRevision	8	static
 ../Core/Src/IOL_ISDU.c:560:13:IOL_Make_Resp_PDOD	24	static
-../Core/Src/IOL_ISDU.c:581:13:IOL_Make_Resp_default	8	static
-../Core/Src/IOL_ISDU.c:588:13:IOL_Make_WriteRespPlus	8	static
-../Core/Src/IOL_ISDU.c:597:9:IOL_State_OP_ISDU_ReadProcess	8	static
-../Core/Src/IOL_ISDU.c:726:9:IOL_State_OP_ISDU_WriteProcess	8	static
+../Core/Src/IOL_ISDU.c:589:13:IOL_Make_Resp_default	8	static
+../Core/Src/IOL_ISDU.c:613:13:IOL_Make_WriteRespPlus	8	static
+../Core/Src/IOL_ISDU.c:622:9:IOL_State_OP_ISDU_ReadProcess	8	static
+../Core/Src/IOL_ISDU.c:751:9:IOL_State_OP_ISDU_WriteProcess	8	static

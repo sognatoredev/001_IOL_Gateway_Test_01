@@ -159,9 +159,9 @@ static uint8_t IOL_OP_DeviceStatus[IOL_OP_ISDU_DEVICESTATUS_LENGTH][IOL_OP_ISDU_
 };
 
 static uint8_t IOL_OP_DetailedDeviceStatus[IOL_OP_ISDU_DETAILEDDEVICESTATUS_LENGTH][IOL_OP_ISDU_OD_LENGTH] = {
-    {0xd1, 0x06},
+    {0xd5, 0x00},
     {0x00, 0x00},
-    {0x00, 0xd7}
+    {0xd5, 0x00}
 };
 
 static uint8_t IOL_OP_VendorName[IOL_OP_ISDU_VENDORNAME_LENGTH][IOL_OP_ISDU_OD_LENGTH] = {
@@ -578,12 +578,37 @@ static void IOL_Make_Resp_PDOD (uint8_t * respArray, uint8_t size)
     device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1] = OP_CKS_GetChecksum(&device_ProcessDataIn_Arr[0], (IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1), 0);
 }
 
+#if 0 // Event trigger 테스트 용도
 static void IOL_Make_Resp_default (void)
 {
     // device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH - 2] = ProcessDataIn_cnt++; // Test cnt Value 
     device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH - 2] = ProcessDataIn_cnt; // Test cnt Value 
     device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1] = OP_CKS_GetChecksum(&device_ProcessDataIn_Arr[0], (IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1), 0);
 }
+#else
+static void IOL_Make_Resp_default (void)
+{
+    // device_ProcessDataIn_arr[OP_ISDU_IN_PROCESSDATALENGTH - 2] = ProcessDataIn_cnt++; // Test cnt Value 
+    device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH - 2] = ProcessDataIn_cnt; // Test cnt Value 
+
+    if (ProcessDataIn_cnt == 40)
+    {
+        ProcessDataIn_cnt++;
+        device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1] = OP_CKS_GetChecksum(&device_ProcessDataIn_Arr[0], (IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1), 1); 
+        
+    }
+    else if (ProcessDataIn_cnt == 60)
+    {
+        ProcessDataIn_cnt++;
+        device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1] = OP_CKS_GetChecksum(&device_ProcessDataIn_Arr[0], (IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1), 1); 
+    }
+    else
+    {
+        device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1] = OP_CKS_GetChecksum(&device_ProcessDataIn_Arr[0], (IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1), 0);
+    }
+    
+}
+#endif
 
 static void IOL_Make_WriteRespPlus (void)
 {

@@ -34,8 +34,30 @@ static uint8_t IOL_PreOP_Packet[8][8] = {
                                         {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}  // R ISDU
                                         };
 
+static uint8_t IOL_OP_EventTest[2][IOL_OP_ISDU_OD_LENGTH] = 
+{
+    {0x81, 0xf4},
+    {0x50, 0x10}
+};
+
+static uint8_t IOL_OP_EventTest2[4] = 
+{
+    0x81, 0xf4, 0x50, 0x12
+};
+
+static uint8_t IOL_OP_EventTest3[4] = 
+{
+    0x81, 0xf4, 0x50, 0x11
+};
+
+
 static uint8_t Page1_seq = 0;
 static uint8_t PreOP_seq_cnt = 0;
+
+extern uint8_t device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH];
+extern uint8_t device_ProcessDataOut_Arr[IOL_OP_ISDU_OUT_PROCESSDATALENGTH];
+extern uint8_t ProcessDataIn_cnt;
+extern uint8_t IOL_OP_ISDU_OD_Res_cnt;
 
 static uint8_t Decode_MC_ReadWrite (uint8_t Data)
 {
@@ -361,7 +383,55 @@ static uint8_t IOL_State_OP_Read_Channel (void)
             break;
 
         case IOL_Channel_Diagnosis :
+            #if 1 // 이벤트 테스트 중
+
+            if ((ProcessDataIn_cnt >= 40) && (ProcessDataIn_cnt <= 59))
+            {
+                device_ProcessDataIn_Arr[0] = IOL_OP_EventTest2[IOL_OP_ISDU_OD_Res_cnt];   // OD 데이터를  Index에 대한 응답 ISDU 구조의 사이즈에 맞게 나눠서 보내기 위함  
+                // device_ProcessDataIn_Arr[1] = IOL_OP_EventTest[IOL_OP_ISDU_OD_Res_cnt][1];   // 현재 씬그립 디바이스의 IODD는 2 octet.
+                IOL_OP_ISDU_OD_Res_cnt++;        // ISDU 요청에 대한 Index 응답의 사이즈에 맞게 나눠서 보내기 위한 카운트값.
+            }
+            else if (ProcessDataIn_cnt >= 60)
+            {
+                device_ProcessDataIn_Arr[0] = IOL_OP_EventTest3[IOL_OP_ISDU_OD_Res_cnt];   // OD 데이터를  Index에 대한 응답 ISDU 구조의 사이즈에 맞게 나눠서 보내기 위함  
+                // device_ProcessDataIn_Arr[1] = IOL_OP_EventTest[IOL_OP_ISDU_OD_Res_cnt][1];   // 현재 씬그립 디바이스의 IODD는 2 octet.
+                IOL_OP_ISDU_OD_Res_cnt++;        // ISDU 요청에 대한 Index 응답의 사이즈에 맞게 나눠서 보내기 위한 카운트값.
+            }
+
+            // if (IOL_OP_ISDU_OD_Res_cnt >= 10)
+            if (IOL_OP_ISDU_OD_Res_cnt >= 4)
+            {
+                // isdudata.isdu_od_writereq_flag = 0;
+                IOL_OP_ISDU_OD_Res_cnt = 0;
+            }
+
+            device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1] = OP_CKS_GetChecksum(&device_ProcessDataIn_Arr[0], (IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1), 1);
+            IOL_ENABLE;
+    
+            if (HAL_UART_Transmit_IT(&huart1, device_ProcessDataIn_Arr, IOL_OP_ISDU_IN_PROCESSDATALENGTH) != HAL_OK)
+            {
+                Error_Handler();
+            }
+            #else
+            device_ProcessDataIn_Arr[0] = IOL_OP_EventTest[IOL_OP_ISDU_OD_Res_cnt][0];   // OD 데이터를  Index에 대한 응답 ISDU 구조의 사이즈에 맞게 나눠서 보내기 위함  
+            device_ProcessDataIn_Arr[1] = IOL_OP_EventTest[IOL_OP_ISDU_OD_Res_cnt][1];   // 현재 씬그립 디바이스의 IODD는 2 octet.
+            IOL_OP_ISDU_OD_Res_cnt++;        // ISDU 요청에 대한 Index 응답의 사이즈에 맞게 나눠서 보내기 위한 카운트값.
             
+            // if (IOL_OP_ISDU_OD_Res_cnt >= 10)
+            if (IOL_OP_ISDU_OD_Res_cnt >= 2)
+            {
+                // isdudata.isdu_od_writereq_flag = 0;
+                IOL_OP_ISDU_OD_Res_cnt = 0;
+            }
+
+            device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1] = OP_CKS_GetChecksum(&device_ProcessDataIn_Arr[0], (IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1), 1);
+            IOL_ENABLE;
+    
+            if (HAL_UART_Transmit_IT(&huart1, device_ProcessDataIn_Arr, IOL_OP_ISDU_IN_PROCESSDATALENGTH) != HAL_OK)
+            {
+                Error_Handler();
+            }
+            #endif
 
             break;
 
@@ -390,8 +460,16 @@ static uint8_t IOL_State_OP_Write_Channel (void)
             break;
 
         case IOL_Channel_Diagnosis :
-            
-
+            #if 1 // event 테스트 중
+            device_ProcessDataOut_Arr[IOL_OP_ISDU_OUT_PROCESSDATALENGTH - 1] = OP_CKS_GetChecksum(&device_ProcessDataOut_Arr[0], (IOL_OP_ISDU_OUT_PROCESSDATALENGTH - 1), 1);
+            IOL_ENABLE;
+    
+            if (HAL_UART_Transmit_IT(&huart1, device_ProcessDataOut_Arr, IOL_OP_ISDU_OUT_PROCESSDATALENGTH) != HAL_OK)
+            {
+                Error_Handler();
+            }
+            DEBUG_GPIO_TOGGLE;
+            #endif
             break;
 
         case IOL_Channel_ISDU :

@@ -16,7 +16,7 @@
 ../Core/Src/IOL_ISDU.c:529:13:IOL_Make_Resp_HWRevision	2
 ../Core/Src/IOL_ISDU.c:544:13:IOL_Make_Resp_FWRevision	2
 ../Core/Src/IOL_ISDU.c:560:13:IOL_Make_Resp_PDOD	2
-../Core/Src/IOL_ISDU.c:581:13:IOL_Make_Resp_default	1
-../Core/Src/IOL_ISDU.c:588:13:IOL_Make_WriteRespPlus	1
-../Core/Src/IOL_ISDU.c:597:9:IOL_State_OP_ISDU_ReadProcess	15
-../Core/Src/IOL_ISDU.c:726:9:IOL_State_OP_ISDU_WriteProcess	3
+../Core/Src/IOL_ISDU.c:589:13:IOL_Make_Resp_default	3
+../Core/Src/IOL_ISDU.c:613:13:IOL_Make_WriteRespPlus	1
+../Core/Src/IOL_ISDU.c:622:9:IOL_State_OP_ISDU_ReadProcess	15
+../Core/Src/IOL_ISDU.c:751:9:IOL_State_OP_ISDU_WriteProcess	3
