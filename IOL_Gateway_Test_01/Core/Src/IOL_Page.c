@@ -20,7 +20,6 @@ static uint8_t IOL_ISDUPage_value[18] = { 0 };
 // static uint8_t IOL_ISDUPage_value[16] = { 0 };
 static uint8_t IOL_Page1_SeqValue[13] = {0x49, 0x49, 0x2b, 0x11, 0x83, 0x83, 0xff, 0xff, 0x00, 0x04, 0x5e, 0x00, 0x00};
 
-static uint8_t IOL_OP_OD_Page_Res_cnt = 0;
 
 static uint8_t device_Page_OD_arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH] = { 0 };
 

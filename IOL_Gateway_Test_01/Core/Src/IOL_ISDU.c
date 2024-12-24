@@ -33,7 +33,7 @@ IOL_ISDUPacket_t ISDU_WritePacketframe[30] =
     { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_PDOutputDescriptor,              0       ,         0             },
     { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_VendorName,                      0       ,         0          , "Seengrip"   },
     { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_VendorText,                      0       ,         0          , "Seengrip, Inc"  },
-    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_ProductName,                     0       ,         0             },
+    { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_ProductName,                     0       ,         0          , "Seengrip-IOL_Gripper"},
     { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_ProductID,                       0       ,         0             },
     { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_ProductText,                     0       ,         0             },
     { IOL_Iservice_M_Wreq8bit,          0     , IOL_Index_SerialNumber,                    0       ,         0             },
@@ -610,6 +610,7 @@ static void IOL_Make_Resp_default (void)
 }
 #endif
 
+// Write Response + 에 대한 확인 메세지
 static void IOL_Make_WriteRespPlus (void)
 {
     device_ProcessDataIn_Arr[0] = 0x52;   // OD 데이터를  Index에 대한 응답 ISDU 구조의 사이즈에 맞게 나눠서 보내기 위함  
@@ -662,70 +663,51 @@ uint8_t IOL_State_OP_ISDU_ReadProcess (void)
         switch (isdudata.index)
         {
             case IOL_Index_ProductName :
-                // IOL_Make_Resp_ProductName();
                 IOL_Make_Resp_PDOD(IOL_OP_ProductName, IOL_OP_ISDU_PRODUCTNAME_LENGTH);
                 break;
 
             case IOL_Index_SerialNumber :
                 DEBUG_GPIO_TOGGLE;
-                // IOL_Make_Resp_SerialNumber();
                 IOL_Make_Resp_PDOD(IOL_OP_SerialNumber, IOL_OP_ISDU_SERIALNUMBER_LENGTH);
                 break;
 
-            // case IOL_Index_VendorName :
-            //     break;
-            // case IOL_Index_VendorText :
-            //     break;
-            // case IOL_Index_ProductText :
-            //     break;
             case IOL_Index_ProductID :
-                // IOL_Make_Resp_ProductID();
                 IOL_Make_Resp_PDOD(IOL_OP_ProductID, IOL_OP_ISDU_PRODUCTID_LENGTH);
                 break;
 
             case IOL_Index_ApplicationSpecificTag :
-                // IOL_Make_Resp_ApplicationSpecificTag();
                 IOL_Make_Resp_PDOD(IOL_OP_ApplicationSpecificTag, IOL_OP_ISDU_APPLICATIONSPECIFICTAG_LENGTH);
                 break;
 
             case IOL_Index_FunctionTag :
-                // IOL_Make_Resp_ApplicationSpecificTag();
                 IOL_Make_Resp_PDOD(IOL_OP_ApplicationSpecificTag, IOL_OP_ISDU_APPLICATIONSPECIFICTAG_LENGTH);
                 break;
                 
             case IOL_Index_LocationTag :
-                // IOL_Make_Resp_ApplicationSpecificTag();
                 IOL_Make_Resp_PDOD(IOL_OP_ApplicationSpecificTag, IOL_OP_ISDU_APPLICATIONSPECIFICTAG_LENGTH);
                 break;
 
             case IOL_Index_PreferredIndex :
-                // DEBUG_GPIO_TOGGLE;
-                // IOL_Make_Resp_ExampleParameter();
                 IOL_Make_Resp_PDOD(IOL_OP_ExampleParameter, IOL_OP_ISDU_EXAMPLEPARAMETER_LENGTH);
                 break;
 
             case IOL_Index_DeviceStatus :
-                // IOL_Make_Resp_DeviceStatus();
                 IOL_Make_Resp_PDOD(IOL_OP_DeviceStatus, IOL_OP_ISDU_DEVICESTATUS_LENGTH);
                 break;
 
             case IOL_Index_DetailedDeviceStatus :
-                // IOL_Make_Resp_DetailedDeviceStatus();
                 IOL_Make_Resp_PDOD(IOL_OP_DetailedDeviceStatus, IOL_OP_ISDU_DETAILEDDEVICESTATUS_LENGTH);
                 break;
             
             case IOL_Index_VendorName :
-                // IOL_Make_Resp_VendorName();
                 IOL_Make_Resp_PDOD(IOL_OP_VendorName, IOL_OP_ISDU_VENDORNAME_LENGTH);
                 break;
 
             case IOL_Index_HardwareRevision :
-                // IOL_Make_Resp_HWRevision();
                 IOL_Make_Resp_PDOD(IOL_OP_HWRevision, IOL_OP_ISDU_HWREVISION_LENGTH);
                 break;
             
             case IOL_Index_FirmwareRevision :
-                // IOL_Make_Resp_FWRevision();
                 IOL_Make_Resp_PDOD(IOL_OP_FWRevision, IOL_OP_ISDU_FWREVISION_LENGTH);
                 break;
         }

@@ -59,6 +59,7 @@ extern uint8_t device_ProcessDataOut_Arr[IOL_OP_ISDU_OUT_PROCESSDATALENGTH];
 extern uint8_t ProcessDataIn_cnt;
 extern uint8_t IOL_OP_ISDU_OD_Res_cnt;
 
+
 static uint8_t Decode_MC_ReadWrite (uint8_t Data)
 {
     uint8_t MCdata = 0;
@@ -353,7 +354,6 @@ static uint8_t IOL_State_PreOP_Write_Channel (void)
 
 static uint8_t IOL_State_PreOP_Process (void)
 {
-
     switch ( IOL_M2D_rxpacket.rw)
     {
         case IOL_RW_Read :
@@ -451,7 +451,6 @@ static uint8_t IOL_State_OP_Write_Channel (void)
     {
         case IOL_Channel_Process :
             
-            
             break;
 
         case IOL_Channel_Page :
@@ -497,6 +496,56 @@ static uint8_t IOL_State_OP_Process (void)
     return ;
 }
 
+
+uint8_t IOL_Reboot_Check (void)
+{
+    #if 0
+    uint8_t Check_State = 0;
+
+    if ((pData[0] == 0xA2) && (pData[1] == 0x00))
+    {
+        Check_State = IOL_StartUp;
+    }
+    else
+    {
+        Check_State = stateIOLseq;
+    }
+
+    return Check_State;
+    #else
+    if (stateIOLseq == IOL_OP)
+    {
+        if (RxIdle_Flag)
+        {
+            RxIdle_Flag = 0;
+            
+        }
+        else
+        {
+            stateIOLseq = IOL_StartUp;
+            
+            HAL_UART_DeInit(&huart1);
+            uart_rx_IDLE_TotalCnt = 0;
+            Page1_seq = 0;
+            PreOP_seq_cnt = 0;
+            IOL_OP_OD_Page_Res_cnt = 0;
+            
+            MX_USART1_UART_Init();
+            HAL_UARTEx_ReceiveToIdle_DMA(&huart1, (uint8_t *)uart1_rx_IDLE_buf, UART_RX_IDLE_BUFSIZE);
+            __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
+            IOL_Rx_IDLEFlag = 1;
+
+            printf("IO-Link Master Disconnected.\r\n");
+            printf("OP to StartUp.\r\n");
+        }
+    }
+    
+    // UART1_RxEnable();
+    
+    return ;
+    #endif
+}
+
 uint8_t IOL_StateM_Process (void)
 {
     switch (stateIOLseq)
@@ -509,11 +558,14 @@ uint8_t IOL_StateM_Process (void)
             break;
         case IOL_OP :
             // IOL_Get_ISDU_WR_ODArr(uart1_rx_IDLE_buf);
+            // stateIOLseq = IOL_Reboot_Check(uart1_rx_IDLE_buf);
             IOL_State_OP_Process();
             break;
     }
     #if 1 // debug Test 
+    
     Test_M2D_TempValue = uart1_rx_IDLE_buf[3];
+    DEBUG_GPIO_TOGGLE;
     #endif
     return ;
 }

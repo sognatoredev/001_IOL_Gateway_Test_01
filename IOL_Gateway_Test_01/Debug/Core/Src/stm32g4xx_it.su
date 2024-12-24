@@ -13,5 +13,6 @@
 ../Core/Src/stm32g4xx_it.c:252:6:TIM1_UP_TIM16_IRQHandler	8	static
 ../Core/Src/stm32g4xx_it.c:266:6:USART1_IRQHandler	8	static
 ../Core/Src/stm32g4xx_it.c:283:6:HAL_TIM_PeriodElapsedCallback	24	static
-../Core/Src/stm32g4xx_it.c:307:6:HAL_UARTEx_RxEventCallback	40	static,ignoring_inline_asm
-../Core/Src/stm32g4xx_it.c:374:6:HAL_UART_TxCpltCallback	16	static
+../Core/Src/stm32g4xx_it.c:309:6:UART1_RxEnable	32	static,ignoring_inline_asm
+../Core/Src/stm32g4xx_it.c:321:6:HAL_UARTEx_RxEventCallback	16	static
+../Core/Src/stm32g4xx_it.c:391:6:HAL_UART_TxCpltCallback	16	static

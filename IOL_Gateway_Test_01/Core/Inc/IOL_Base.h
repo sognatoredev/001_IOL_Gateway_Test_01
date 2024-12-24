@@ -35,10 +35,12 @@ typedef struct M2DRxPacketParse
     uint8_t ckt;
 } M2DRxPacketParse_t;
 
+
 extern uint8_t IOL_Parse_Rx_data (uint8_t * pData);
 extern void IOL_Print_ParsingM2Ddata (void);
 extern uint8_t OP_CKS_GetChecksum (const uint8_t * pData, uint8_t length, uint8_t eventflag);
 extern uint8_t IOL_StateM_Process (void);
+extern uint8_t IOL_Reboot_Check (void);
 /* USER CODE BEGIN Prototypes */
 
 #ifdef __cplusplus

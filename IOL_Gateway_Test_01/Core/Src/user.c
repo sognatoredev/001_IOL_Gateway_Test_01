@@ -35,8 +35,14 @@
 
 uint32_t TIM1_CNT_1 = 0;
 uint32_t TIM1_CNT_2 = 0;
+uint32_t TIM1_CNT_3 = 0;
+
+uint8_t RxIdle_Flag = 0;
+uint8_t IOL_Rx_IDLEFlag = 0;
 
 uint8_t ProcessDataIn_cnt = 0;
+uint32_t Prv_Rx_IDLE_TotalCnt = 0;
+uint8_t IOL_OP_OD_Page_Res_cnt = 0;
 
 uint16_t queDataNum = 0;
 
@@ -87,6 +93,18 @@ void ProcessDataIn_IncreaseCntValue (void)
         IOL_Print_ParsingM2Ddata();
     }
 }
+
+void General_IOL_Process (void)
+{
+    if ( TIM1_CNT_3 >= 1000)
+    {
+        TIM1_CNT_3 = 0;
+
+        IOL_Reboot_Check();
+    }
+    
+}
+
 
 #if 0
 /* Display Boot Message */

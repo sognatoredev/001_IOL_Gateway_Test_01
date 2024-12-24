@@ -70,6 +70,7 @@ extern "C" {
 
 extern uint32_t TIM1_CNT_1;
 extern uint32_t TIM1_CNT_2;
+extern uint32_t TIM1_CNT_3;
 
 #define LED_RED_PORT            GPIOC
 #define LED_GREEN_PORT          GPIOC
@@ -105,6 +106,7 @@ extern void User_Toggle_Led (void);
 extern void BootMessagePrint (void);
 extern void GetClockSourcePrint (void);
 extern void ProcessDataIn_IncreaseCntValue (void);
+extern void General_IOL_Process (void);
 
 #define quedata_arraylength           1000
 
@@ -119,10 +121,15 @@ extern Q_queue_t USB_TX_Q;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern uint32_t uart_rx_IDLE_TotalCnt;
 extern uint16_t iol_processdata_cnt;
+extern uint8_t IOL_OP_OD_Page_Res_cnt;
 extern uint8_t uart1_rx_IDLE_buf[];
 extern uint8_t TestValue[];
 
 extern uint8_t UserButton_Flag;
+
+extern uint32_t Prv_Rx_IDLE_TotalCnt;
+extern uint8_t RxIdle_Flag;
+extern uint8_t IOL_Rx_IDLEFlag;
 #if 0 
 #define quedata_arraylength       5000
 

@@ -61,7 +61,7 @@ void EXTI9_5_IRQHandler(void);
 void TIM1_UP_TIM16_IRQHandler(void);
 void USART1_IRQHandler(void);
 /* USER CODE BEGIN EFP */
-
+extern void UART1_RxEnable (void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

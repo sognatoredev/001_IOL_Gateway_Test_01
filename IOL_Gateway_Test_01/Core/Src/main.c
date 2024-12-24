@@ -113,6 +113,7 @@ int main(void)
   {
     User_Toggle_Led();
     ProcessDataIn_IncreaseCntValue();
+    General_IOL_Process();
     // HAL_Delay(500);
     // HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_14);
     // HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_15);
