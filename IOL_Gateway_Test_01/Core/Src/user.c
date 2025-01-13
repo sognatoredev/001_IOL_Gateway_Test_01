@@ -32,6 +32,7 @@
 /*---- function prototypes ---------------------------------------------------*/
 /*---- data declarations -----------------------------------------------------*/
 #include "user_uart_proc.h"
+#include "MB_Interface.h"
 
 uint32_t TIM1_CNT_1 = 0;
 uint32_t TIM1_CNT_2 = 0;
@@ -59,10 +60,13 @@ extern uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
 uint32_t uart_rx_IDLE_TotalCnt = 0;
 uint16_t iol_processdata_cnt = 0;
 uint8_t uart1_rx_IDLE_buf[UART_RX_IDLE_BUFSIZE] = { 0 };
+uint8_t uart2_rx_IDLE_buf[UART_RX_IDLE_BUFSIZE] = { 0 };
 
 uint8_t TestValue[10] = {0x70, 0x5D, 0x93, 0x15, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00};             //checksum Test.
 
 uint8_t UserButton_Flag = 0;
+
+uint8_t Test_Rs485Array[] = "TX RS-485\r\n";
 
 int _write(int file, char *ptr, int len)
 {
@@ -89,8 +93,15 @@ void ProcessDataIn_IncreaseCntValue (void)
         TIM1_CNT_2 = 0;
         ProcessDataIn_cnt++;
 
-        printf("Master to Device Temp Value :   %d\r\n", Test_M2D_TempValue);
-        IOL_Print_ParsingM2Ddata();
+        // printf("Master to Device Temp Value :   %d\r\n", Test_M2D_TempValue);
+        // IOL_Print_ParsingM2Ddata();
+
+        
+        // MBI_UartTx(Test_Rs485Array, strlen(Test_Rs485Array));
+        // if (HAL_UART_Transmit_IT(&huart2, Test_Rs485Array, strlen(Test_Rs485Array)) != HAL_OK)
+        // {
+        //     Error_Handler();
+        // }
     }
 }
 

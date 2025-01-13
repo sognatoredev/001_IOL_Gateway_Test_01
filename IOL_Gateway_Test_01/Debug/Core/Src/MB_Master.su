@@ -1,0 +1,7 @@
+../Core/Src/MB_Master.c:8:6:MBM_Start	4	static
+../Core/Src/MB_Master.c:19:6:MBM_Handler1ms	16	static
+../Core/Src/MB_Master.c:103:6:MBM_Receive	24	static
+../Core/Src/MB_Master.c:126:6:MBM_ServiceTxReq	16	static
+../Core/Src/MB_Master.c:143:6:MBM_ServiceRxReq	16	static
+../Core/Src/MB_Master.c:159:6:MBM_ErrorClr	16	static
+../Core/Src/MB_Master.c:171:13:MBM_ProtocolTimeout	8	static

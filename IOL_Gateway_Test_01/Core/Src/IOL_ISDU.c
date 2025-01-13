@@ -19,6 +19,7 @@
 // IOL_ISDUPacket_t IOL_ISDUpacket;
 IOL_ISDUPacket_t isdudata;
 IOL_IndexTable IOL_indextable;
+IOL_ISDU_ParameterValue_t IOL_ISDU_ParameterValue;
 
 IOL_ISDUPacket_t ISDU_WritePacketframe[30] = 
 {
@@ -49,11 +50,12 @@ IOL_ISDUPacket_t ISDU_WritePacketframe[30] =
 
 uint8_t extlength_flag = 0;
 uint8_t IOL_OP_ISDU_OD_Res_cnt = 0;
-
+uint8_t First_Loadingcnt = 0;
 
 // static uint8_t device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH]; // + 1   CKS
 uint8_t device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH]; // + 1   CKS
 uint8_t device_ProcessDataOut_Arr[IOL_OP_ISDU_OUT_PROCESSDATALENGTH];
+uint8_t M2D_PDOut_Arr[12];
 
 extern UART_HandleTypeDef huart1;
 extern uint8_t ProcessDataIn_cnt;
@@ -146,6 +148,23 @@ static uint8_t IOL_OP_ExampleParameter[IOL_OP_ISDU_PRODUCTID_LENGTH][IOL_OP_ISDU
 };
 #else
 static uint8_t IOL_OP_ExampleParameter[IOL_OP_ISDU_PRODUCTID_LENGTH][IOL_OP_ISDU_OD_LENGTH] = {
+    {0xd4, 0x03},
+    {0xe8, 0x3f},
+    {0x00, 0x00}
+};
+
+volatile uint8_t IOL_OP_ModbusLimitSpeed[IOL_OP_ISDU_MODBUSLIMITSPEED_LENGTH][IOL_OP_ISDU_OD_LENGTH] = {
+    {0xd4, 0x03},
+    {0xe8, 0x3f}
+};
+
+uint8_t IOL_OP_ModbusActualPos[IOL_OP_ISDU_PRODUCTID_LENGTH][IOL_OP_ISDU_OD_LENGTH] = {
+    {0xd4, 0x03},
+    {0xe8, 0x3f},
+    {0x00, 0x00}
+};
+
+uint8_t IOL_OP_ModbusEventActivate[IOL_OP_ISDU_PRODUCTID_LENGTH][IOL_OP_ISDU_OD_LENGTH] = {
     {0xd4, 0x03},
     {0xe8, 0x3f},
     {0x00, 0x00}
@@ -343,6 +362,11 @@ static uint8_t IOL_Get_ISDU_Index (uint8_t * pData)
         // 8bit 쓰기 요청 플래그 셋
         isdudata.isdu_od_writeReq8bit_flag = 1;
     }
+    else if (isdudata.iservice == 0x09)
+    {
+        // 8bit 읽기 요청 플래그 셋
+        isdudata.isdu_od_readReq8bit_flag = 1;
+    }
 
     return isdudata.index;
 }
@@ -376,7 +400,6 @@ uint8_t IOL_Get_ISDU_WR_ODArr (uint8_t * pData)
 
 uint8_t IOL_Get_ISDU_RD_ODArr (uint8_t * pData)
 {
-
     // IOL_Get_ISDU_Iservice(pData);
     // IOL_Get_ISDU_Length(pData);
     // IOL_Get_ISDU_Index(pData);
@@ -619,6 +642,39 @@ static void IOL_Make_WriteRespPlus (void)
     device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1] = OP_CKS_GetChecksum(&device_ProcessDataIn_Arr[0], (IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1), 0);
 }
 
+// 16 bit 파라메터 데이터의 Write에 대한 응답전 CHKPDU 생성 
+static void IOL_Make_Resp_CHKPDU (uint8_t * respArray, uint8_t length)
+{
+    uint8_t (* Resp_IndexArray)[IOL_OP_ISDU_OD_LENGTH];
+    uint8_t checksumsize = 0;
+    uint8_t chkpdu = 0;
+    uint8_t i,j = 0;
+
+    Resp_IndexArray = respArray;
+    checksumsize = length;
+    
+    // 배열의 마지막 데이터를 뺀 값을 순서대로 XOR
+    for ( i = 0; i < (checksumsize / IOL_OP_ISDU_OD_LENGTH); i++) 
+    {
+        for ( j = 0; j < IOL_OP_ISDU_OD_LENGTH; j++) 
+        {
+            chkpdu ^= Resp_IndexArray[i][j];
+            if (i == 1 && j == 0)
+            {
+                break;
+            }
+        }
+        
+        if (i == 1)
+        {
+            break;
+        }
+    }
+
+    // 마지막 데이터에 계산된 CHKPDU 값을 넣어줌
+    Resp_IndexArray[i][j+1] = chkpdu;
+}
+
 // ISDU OD Read Process
 uint8_t IOL_State_OP_ISDU_ReadProcess (void)
 {
@@ -656,7 +712,14 @@ uint8_t IOL_State_OP_ISDU_ReadProcess (void)
         // device_ProcessDataOut_arr[IOL_OP_ISDU_OUT_PROCESSDATALENGTH - 1] = OP_CKS_GetChecksum(&device_ProcessDataOut_arr[0], IOL_OP_ISDU_OUT_PROCESSDATALENGTH - 1, 0); // CKS 생성
     }
     #else
-    if (isdudata.isdu_od_writereq_flag == 1)
+    if ((isdudata.isdu_od_writereq_flag == 1) && (isdudata.isdu_od_writeReq8bit_flag == 1))
+    {
+        isdudata.isdu_od_writereq_flag = 0;
+        isdudata.isdu_od_writeReq8bit_flag = 0;
+        IOL_Make_WriteRespPlus();
+    }
+    // if (isdudata.isdu_od_writereq_flag == 1)
+    else if (isdudata.isdu_od_writereq_flag == 1)
     {
         // isdudata.isdudata.isdu_od_writereq_flag = 0;
 
@@ -667,7 +730,7 @@ uint8_t IOL_State_OP_ISDU_ReadProcess (void)
                 break;
 
             case IOL_Index_SerialNumber :
-                DEBUG_GPIO_TOGGLE;
+                // DEBUG_GPIO_TOGGLE;
                 IOL_Make_Resp_PDOD(IOL_OP_SerialNumber, IOL_OP_ISDU_SERIALNUMBER_LENGTH);
                 break;
 
@@ -710,6 +773,21 @@ uint8_t IOL_State_OP_ISDU_ReadProcess (void)
             case IOL_Index_FirmwareRevision :
                 IOL_Make_Resp_PDOD(IOL_OP_FWRevision, IOL_OP_ISDU_FWREVISION_LENGTH);
                 break;
+            
+            case IOL_Index_ModbusLimitSpeed :
+                // IOL_OP_ModbusLimitSpeed[0][1] = (uint8_t) isdudata.isdu_od[2];
+                // IOL_OP_ModbusLimitSpeed[1][0] = (uint8_t) isdudata.isdu_od[3];
+                // IOL_Make_Resp_CHKPDU0(IOL_OP_ModbusLimitSpeed,sizeof(IOL_OP_ModbusLimitSpeed));
+                IOL_Make_Resp_PDOD(IOL_OP_ModbusLimitSpeed, IOL_OP_ISDU_EXAMPLEPARAMETER_LENGTH);
+                break;
+
+            case IOL_Index_ModbusActualPos :
+                IOL_Make_Resp_PDOD(IOL_OP_ModbusActualPos, IOL_OP_ISDU_EXAMPLEPARAMETER_LENGTH);
+                break;
+            
+            case IOL_Index_ModbusEventActivate :
+                IOL_Make_Resp_PDOD(IOL_OP_ModbusEventActivate, IOL_OP_ISDU_EXAMPLEPARAMETER_LENGTH);
+                break;
         }
         // device_ProcessDataOut_arr[IOL_OP_ISDU_OUT_PROCESSDATALENGTH - 1] = OP_CKS_GetChecksum(&device_ProcessDataOut_arr[0], IOL_OP_ISDU_OUT_PROCESSDATALENGTH - 1, 0); // CKS 생성
     }
@@ -729,6 +807,37 @@ uint8_t IOL_State_OP_ISDU_ReadProcess (void)
     return ;
 }
 
+uint16_t IOL_Get_ISDU_ParameterValue (uint8_t (*pData)[2])
+{
+    uint16_t parametervalue = 0;
+    uint8_t (*parametervaluearray)[2];
+
+    // *parametervaluearray[2] = *pData[2];
+
+    // parametervaluearray[0][1] = isdudata.isdu_od[2];
+    // parametervaluearray[1][0] = isdudata.isdu_od[3];
+    // pData[0][1] = isdudata.isdu_od[2];
+    // pData[1][0] = isdudata.isdu_od[3];
+
+    parametervalue = (uint16_t) ((isdudata.isdu_od[2] << 8) | isdudata.isdu_od[3]);
+    
+    #if 0
+    uint8_t *IndexParameterArray;
+    uint8_t msb, lsb = 0;
+
+    msb = (parameterValue >> 8) & 0xFF;
+    lsb = parameterValue & 0xFF;
+
+    IndexParameterArray = pData;
+
+    IndexParameterArray[0][1] = msb;
+    IndexParameterArray[1][0] = lsb;
+    #endif
+
+    return parametervalue;
+
+}
+
 // ISDU OD Process
 uint8_t IOL_State_OP_ISDU_WriteProcess (void)
 {
@@ -737,7 +846,61 @@ uint8_t IOL_State_OP_ISDU_WriteProcess (void)
         isdudata.isdu_od_rxcplt = 0;
 
         isdudata.isdu_od_writereq_flag = 1;
+        
+        switch (isdudata.index)
+        {
+            case IOL_Index_ModbusLimitSpeed:
+                #if 1
+                // if (First_Loadingcnt == 0)
+                // {
+                //     First_Loadingcnt++;
+                // }
+                // else if (First_Loadingcnt > 0)
+                // {
+                //     IOL_OP_ModbusLimitSpeed[0][1] = isdudata.isdu_od[2];
+                //     IOL_OP_ModbusLimitSpeed[1][0] = isdudata.isdu_od[3];
+                //     IOL_Make_Resp_CHKPDU(IOL_OP_ModbusLimitSpeed,sizeof(IOL_OP_ModbusLimitSpeed));
+                // }
+                
+                if (isdudata.isdu_od_readReq8bit_flag == 1)
+                {
+                    IOL_Make_Resp_CHKPDU(IOL_OP_ModbusLimitSpeed,sizeof(IOL_OP_ModbusLimitSpeed));
+
+                    isdudata.isdu_od_readReq8bit_flag = 0;
+                }
+                else if (isdudata.isdu_od_writeReq8bit_flag == 1)
+                {
+                    IOL_OP_ModbusLimitSpeed[0][1] = isdudata.isdu_od[2];
+                    IOL_OP_ModbusLimitSpeed[1][0] = isdudata.isdu_od[3];
+                    IOL_Make_Resp_CHKPDU(IOL_OP_ModbusLimitSpeed,sizeof(IOL_OP_ModbusLimitSpeed));
+                }
+                #else
+                if (isdudata.isdu_od_writeReq8bit_flag == 1)
+                {
+                    IOL_OP_ModbusLimitSpeed[0][1] = isdudata.isdu_od[2];
+                    IOL_OP_ModbusLimitSpeed[1][0] = isdudata.isdu_od[3];
+                    IOL_Make_Resp_CHKPDU(IOL_OP_ModbusLimitSpeed,sizeof(IOL_OP_ModbusLimitSpeed));
+
+                }
+                else if (isdudata.isdu_od_readReq8bit_flag == 1)
+                {
+                    IOL_Make_Resp_CHKPDU(IOL_OP_ModbusLimitSpeed,sizeof(IOL_OP_ModbusLimitSpeed));
+
+                    isdudata.isdu_od_readReq8bit_flag = 0;
+                }
+                #endif
+
+                // IOL_ISDU_ParameterValue.ParameterValue_ModbusLimitSpeed = IOL_Get_ISDU_ParameterValue(IOL_OP_ModbusLimitSpeed);
+                break;
+            case IOL_Index_ModbusActualPos:
+                // IOL_ISDU_ParameterValue.ParameterValue_ModbusActualPos = IOL_Get_ISDU_ParameterValue(IOL_OP_ModbusActualPos);
+                break;
+            case IOL_Index_ModbusEventActivate:
+                // IOL_ISDU_ParameterValue.ParameterValue_ModbusEventActivate = IOL_Get_ISDU_ParameterValue(IOL_OP_ModbusEventActivate);
+                break;
+        }
     }
+
     device_ProcessDataOut_Arr[IOL_OP_ISDU_OUT_PROCESSDATALENGTH - 1] = OP_CKS_GetChecksum(&device_ProcessDataOut_Arr[0], IOL_OP_ISDU_OUT_PROCESSDATALENGTH - 1, 0); // CKS 생성
 
     IOL_ENABLE;
@@ -750,7 +913,12 @@ uint8_t IOL_State_OP_ISDU_WriteProcess (void)
     return ;
 }
 
-
+void IOL_ParameterValue_Init(void)
+{
+    IOL_ISDU_ParameterValue.ParameterValue_ModbusLimitSpeed = 1000;
+    IOL_ISDU_ParameterValue.ParameterValue_ModbusActualPos = 1000;
+    IOL_ISDU_ParameterValue.ParameterValue_ModbusEventActivate = 1000;
+}
 
 
 /*******************************************************************************

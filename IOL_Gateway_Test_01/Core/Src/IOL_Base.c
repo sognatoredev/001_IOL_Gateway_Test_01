@@ -21,6 +21,7 @@
 
 M2DRxPacketParse_t IOL_M2D_rxpacket;
 
+
 static uint8_t IOL_Checksum_SeedValue = 0x52;
 static uint8_t IOL_Page1_SeqValue[13] = {0x49, 0x49, 0x2b, 0x11, 0x83, 0x83, 0xff, 0xff, 0x00, 0x04, 0x5e, 0x00, 0x00};
 static uint8_t IOL_PreOP_Packet[8][8] = {
@@ -54,8 +55,10 @@ static uint8_t IOL_OP_EventTest3[4] =
 static uint8_t Page1_seq = 0;
 static uint8_t PreOP_seq_cnt = 0;
 
+uint8_t IOL_EventFlag = 0;
 extern uint8_t device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH];
 extern uint8_t device_ProcessDataOut_Arr[IOL_OP_ISDU_OUT_PROCESSDATALENGTH];
+extern uint8_t M2D_PDOut_Arr[];
 extern uint8_t ProcessDataIn_cnt;
 extern uint8_t IOL_OP_ISDU_OD_Res_cnt;
 
@@ -285,19 +288,23 @@ static uint8_t IOL_State_PreOP_Read_Channel (void)
     switch (IOL_M2D_rxpacket.commchannel)
     {
         case IOL_Channel_Process :
-            preop_data_arr[i] = OP_CKS_GetChecksum(&preop_data_arr[0], PREOP_DATA_LENGTH, 0);
+            IOL_EventFlag = 0;
+            preop_data_arr[i] = OP_CKS_GetChecksum(&preop_data_arr[0], PREOP_DATA_LENGTH, IOL_EventFlag );
             break;
 
         case IOL_Channel_Page :
-            preop_data_arr[i] = OP_CKS_GetChecksum(&preop_data_arr[0], PREOP_DATA_LENGTH, 0);
+            IOL_EventFlag = 0;
+            preop_data_arr[i] = OP_CKS_GetChecksum(&preop_data_arr[0], PREOP_DATA_LENGTH, IOL_EventFlag );
             break;
 
         case IOL_Channel_Diagnosis :
-            preop_data_arr[i] = OP_CKS_GetChecksum(&preop_data_arr[0], PREOP_DATA_LENGTH, 1);
+            IOL_EventFlag = 1;
+            preop_data_arr[i] = OP_CKS_GetChecksum(&preop_data_arr[0], PREOP_DATA_LENGTH, IOL_EventFlag );
             break;
 
         case IOL_Channel_ISDU :
-            preop_data_arr[i] = OP_CKS_GetChecksum(&preop_data_arr[0], PREOP_DATA_LENGTH, 0);
+            IOL_EventFlag = 0;
+            preop_data_arr[i] = OP_CKS_GetChecksum(&preop_data_arr[0], PREOP_DATA_LENGTH, IOL_EventFlag );
             break;
     }
 
@@ -322,19 +329,23 @@ static uint8_t IOL_State_PreOP_Write_Channel (void)
     switch (IOL_M2D_rxpacket.commchannel)
     {
         case IOL_Channel_Process :
-            preop_data_arr[0] = OP_CKS_GetChecksum(&preop_data_arr[0], 0, 0);
+            IOL_EventFlag = 0;
+            preop_data_arr[0] = OP_CKS_GetChecksum(&preop_data_arr[0], 0, IOL_EventFlag);
             break;
 
         case IOL_Channel_Page :
-            preop_data_arr[0] = OP_CKS_GetChecksum(&preop_data_arr[0], 0, 0);
+            IOL_EventFlag = 0;
+            preop_data_arr[0] = OP_CKS_GetChecksum(&preop_data_arr[0], 0, IOL_EventFlag);
             break;
 
         case IOL_Channel_Diagnosis :
-            preop_data_arr[0] = OP_CKS_GetChecksum(&preop_data_arr[0], 0, 1);
+            IOL_EventFlag = 1;
+            preop_data_arr[0] = OP_CKS_GetChecksum(&preop_data_arr[0], 0, IOL_EventFlag);
             break;
 
         case IOL_Channel_ISDU :
-            preop_data_arr[0] = OP_CKS_GetChecksum(&preop_data_arr[0], 0, 1);
+            IOL_EventFlag = 1;
+            preop_data_arr[0] = OP_CKS_GetChecksum(&preop_data_arr[0], 0, IOL_EventFlag);
             break;
     }
 
@@ -378,13 +389,13 @@ static uint8_t IOL_State_OP_Read_Channel (void)
             break;
 
         case IOL_Channel_Page :
+            IOL_EventFlag = 0;
             IOL_State_OP_Page_ReadProcess();
-
             break;
 
         case IOL_Channel_Diagnosis :
             #if 1 // 이벤트 테스트 중
-
+            IOL_EventFlag = 1;
             if ((ProcessDataIn_cnt >= 40) && (ProcessDataIn_cnt <= 59))
             {
                 device_ProcessDataIn_Arr[0] = IOL_OP_EventTest2[IOL_OP_ISDU_OD_Res_cnt];   // OD 데이터를  Index에 대한 응답 ISDU 구조의 사이즈에 맞게 나눠서 보내기 위함  
@@ -405,7 +416,7 @@ static uint8_t IOL_State_OP_Read_Channel (void)
                 IOL_OP_ISDU_OD_Res_cnt = 0;
             }
 
-            device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1] = OP_CKS_GetChecksum(&device_ProcessDataIn_Arr[0], (IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1), 1);
+            device_ProcessDataIn_Arr[IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1] = OP_CKS_GetChecksum(&device_ProcessDataIn_Arr[0], (IOL_OP_ISDU_IN_PROCESSDATALENGTH - 1), IOL_EventFlag);
             IOL_ENABLE;
     
             if (HAL_UART_Transmit_IT(&huart1, device_ProcessDataIn_Arr, IOL_OP_ISDU_IN_PROCESSDATALENGTH) != HAL_OK)
@@ -436,6 +447,7 @@ static uint8_t IOL_State_OP_Read_Channel (void)
             break;
 
         case IOL_Channel_ISDU :
+            IOL_EventFlag = 0;
             IOL_State_OP_ISDU_ReadProcess();
 
             break;
@@ -467,14 +479,13 @@ static uint8_t IOL_State_OP_Write_Channel (void)
             {
                 Error_Handler();
             }
-            DEBUG_GPIO_TOGGLE;
+            // DEBUG_GPIO_TOGGLE;
             #endif
             break;
 
         case IOL_Channel_ISDU :
             IOL_Get_ISDU_WR_ODArr(uart1_rx_IDLE_buf);
             IOL_State_OP_ISDU_WriteProcess();
-
             break;
     }
 
@@ -535,8 +546,8 @@ uint8_t IOL_Reboot_Check (void)
             __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
             IOL_Rx_IDLEFlag = 1;
 
-            printf("IO-Link Master Disconnected.\r\n");
-            printf("OP to StartUp.\r\n");
+            // printf("IO-Link Master Disconnected.\r\n");
+            // printf("OP to StartUp.\r\n");
         }
     }
     
@@ -565,7 +576,7 @@ uint8_t IOL_StateM_Process (void)
     #if 1 // debug Test 
     
     Test_M2D_TempValue = uart1_rx_IDLE_buf[3];
-    DEBUG_GPIO_TOGGLE;
+    // DEBUG_GPIO_TOGGLE;
     #endif
     return ;
 }
@@ -579,6 +590,11 @@ uint8_t IOL_Parse_Rx_data (uint8_t * pData)
 
     IOL_M2D_rxpacket.mseqtype = Decode_CKT_Type(*(++pData));
     IOL_M2D_rxpacket.ckt = Decode_CKT_Checksum(*pData);
+
+    M2D_PDOut_Arr[0] = uart1_rx_IDLE_buf[2];
+    M2D_PDOut_Arr[1] = uart1_rx_IDLE_buf[3];
+    M2D_PDOut_Arr[2] = uart1_rx_IDLE_buf[4];
+    M2D_PDOut_Arr[3] = uart1_rx_IDLE_buf[5];
 
     return 0;
 }

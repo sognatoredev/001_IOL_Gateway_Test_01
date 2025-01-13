@@ -21,7 +21,6 @@
 #include "dma.h"
 #include "tim.h"
 #include "usart.h"
-#include "usb_device.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -92,16 +91,20 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_USART1_UART_Init();
-  MX_USB_Device_Init();
   MX_TIM1_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  Q_Init(&USB_TX_Q, (uint8_t *) USB_TX_Data, quedata_arraylength);
+  IOL_ConnectToIFM_Read();
+  IOL_ParameterValue_Init();
+  // Q_Init(&USB_TX_Q, (uint8_t *) USB_TX_Data, quedata_arraylength);
 
   HAL_Delay(3000);
   HAL_TIM_Base_Start_IT(&htim1);
-  GetClockSourcePrint();
-  BootMessagePrint();
+  // GetClockSourcePrint();
+  // BootMessagePrint();
 
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t *)uart2_rx_IDLE_buf, UART_RX_IDLE_BUFSIZE);
+  __HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart1, (uint8_t *)uart1_rx_IDLE_buf, UART_RX_IDLE_BUFSIZE);
   __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
   // HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);
@@ -140,9 +143,8 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
-  RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV6;

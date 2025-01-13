@@ -1,0 +1,10 @@
+../Core/Src/MB_Interface.c:14:6:MBI_UartRx	16	static
+../Core/Src/MB_Interface.c:19:6:MBI_Timer1ms	8	static
+../Core/Src/MB_Interface.c:24:6:MBI_UartTx	24	static
+../Core/Src/MB_Interface.c:39:6:MBI_Init	8	static
+../Core/Src/MB_Interface.c:53:6:MBI_IsduTxReq	16	static
+../Core/Src/MB_Interface.c:58:6:MBI_IsduRxReq	16	static
+../Core/Src/MB_Interface.c:63:6:MBI_ErrorClr	16	static
+../Core/Src/MB_Interface.c:68:6:MBI_IsduTxCfm	16	static
+../Core/Src/MB_Interface.c:73:6:MBI_IsduRxRes	16	static
+../Core/Src/MB_Interface.c:78:6:MBI_Error	16	static

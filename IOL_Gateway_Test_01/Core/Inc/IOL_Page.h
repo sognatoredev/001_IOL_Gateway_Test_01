@@ -27,6 +27,8 @@ extern UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN Prototypes */
 
+extern void IOL_ConnectToIFM_Read (void);
+
 #ifdef __cplusplus
 }
 #endif

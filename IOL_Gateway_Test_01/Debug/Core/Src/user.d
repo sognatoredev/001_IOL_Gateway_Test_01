@@ -22,19 +22,15 @@ Core/Src/user.o: ../Core/Src/user.c ../Core/Inc/user.h ../Core/Inc/main.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_flash.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_flash_ex.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_flash_ramfunc.h \
- ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_pcd.h \
- ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_usb.h \
- ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_pcd_ex.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_pwr.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_pwr_ex.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_tim.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_tim_ex.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart_ex.h \
- ../Core/Inc/user.h ../Core/Inc/queue.h ../USB_Device/App/usb_device.h \
- ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h \
- ../USB_Device/Target/usbd_conf.h ../Core/Inc/user_uart_proc.h \
- ../Core/Inc/usart.h
+ ../Core/Inc/user.h ../Core/Inc/queue.h ../Core/Inc/user_uart_proc.h \
+ ../Core/Inc/usart.h ../Core/Inc/MB_Interface.h ../Core/Inc/MB_Common.h \
+ ../Core/Inc/MB_Master.h ../Core/Inc/MB_Interface.h
 ../Core/Inc/user.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal.h:
@@ -60,9 +56,6 @@ Core/Src/user.o: ../Core/Src/user.c ../Core/Inc/user.h ../Core/Inc/main.h \
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_flash.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_flash_ex.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_flash_ramfunc.h:
-../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_pcd.h:
-../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_usb.h:
-../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_pcd_ex.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_pwr.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_pwr_ex.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_tim.h:
@@ -71,8 +64,9 @@ Core/Src/user.o: ../Core/Src/user.c ../Core/Inc/user.h ../Core/Inc/main.h \
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart_ex.h:
 ../Core/Inc/user.h:
 ../Core/Inc/queue.h:
-../USB_Device/App/usb_device.h:
-../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h:
-../USB_Device/Target/usbd_conf.h:
 ../Core/Inc/user_uart_proc.h:
 ../Core/Inc/usart.h:
+../Core/Inc/MB_Interface.h:
+../Core/Inc/MB_Common.h:
+../Core/Inc/MB_Master.h:
+../Core/Inc/MB_Interface.h:

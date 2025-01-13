@@ -1,0 +1,6 @@
+../Core/Src/MB_Core.c:7:6:MBC_ProcessWriteReq	1
+../Core/Src/MB_Core.c:14:6:MBC_ProcessReadReq	1
+../Core/Src/MB_Core.c:18:6:MBC_WriteReq	1
+../Core/Src/MB_Core.c:36:6:MBC_ReadReq	1
+../Core/Src/MB_Core.c:54:6:MBC_ParsePacket	2
+../Core/Src/MB_Core.c:69:17:MB_CrcCalc	5

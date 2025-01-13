@@ -4,6 +4,7 @@
         "user.h": "c",
         "user_uart_proc.h": "c",
         "iol_isdu.h": "c",
-        "iol_page.h": "c"
+        "iol_page.h": "c",
+        "iol_base.h": "c"
     }
 }

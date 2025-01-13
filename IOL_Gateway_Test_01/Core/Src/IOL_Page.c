@@ -46,13 +46,18 @@ void IOL_ConnectToIFM_Read (void)
 
 uint8_t IOL_State_OP_Page_ReadProcess (void)
 {
-    IOL_ConnectToIFM_Read();
+    // IOL_ConnectToIFM_Read();
+    if (uart1_rx_IDLE_buf[0] == 0xA0)
+    {
+        IOL_OP_OD_Page_Res_cnt = 0;
+    }
 
     device_Page_OD_arr[0] = IOL_ISDUPage_value[IOL_OP_OD_Page_Res_cnt];
     device_Page_OD_arr[1] = IOL_ISDUPage_value[IOL_OP_OD_Page_Res_cnt + 1];
     IOL_OP_OD_Page_Res_cnt++;
 
     if (IOL_OP_OD_Page_Res_cnt >= 16)
+    // if (IOL_OP_OD_Page_Res_cnt >= 15)
     {
         DEBUG_GPIO_TOGGLE; // 디버깅 트리거
         IOL_OP_OD_Page_Res_cnt = 0;

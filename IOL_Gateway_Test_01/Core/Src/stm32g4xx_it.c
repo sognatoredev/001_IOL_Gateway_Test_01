@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "IOL_ISDU.h"
+#include "MB_Interface.h"
 // #include "user_uart_proc.h"
 /* USER CODE END Includes */
 
@@ -57,10 +58,11 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern PCD_HandleTypeDef hpcd_USB_FS;
 extern TIM_HandleTypeDef htim1;
 extern DMA_HandleTypeDef hdma_usart1_rx;
+extern DMA_HandleTypeDef hdma_usart2_rx;
 extern UART_HandleTypeDef huart1;
+extern UART_HandleTypeDef huart2;
 /* USER CODE BEGIN EV */
 extern uint8_t IOL_RX_CONTINUE_FLAG;
 /* USER CODE END EV */
@@ -218,17 +220,17 @@ void DMA1_Channel1_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles USB low priority interrupt remap.
+  * @brief This function handles DMA1 channel2 global interrupt.
   */
-void USB_LP_IRQHandler(void)
+void DMA1_Channel2_IRQHandler(void)
 {
-  /* USER CODE BEGIN USB_LP_IRQn 0 */
+  /* USER CODE BEGIN DMA1_Channel2_IRQn 0 */
 
-  /* USER CODE END USB_LP_IRQn 0 */
-  HAL_PCD_IRQHandler(&hpcd_USB_FS);
-  /* USER CODE BEGIN USB_LP_IRQn 1 */
+  /* USER CODE END DMA1_Channel2_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart2_rx);
+  /* USER CODE BEGIN DMA1_Channel2_IRQn 1 */
 
-  /* USER CODE END USB_LP_IRQn 1 */
+  /* USER CODE END DMA1_Channel2_IRQn 1 */
 }
 
 /**
@@ -278,10 +280,25 @@ void USART1_IRQHandler(void)
   /* USER CODE END USART1_IRQn 1 */
 }
 
+/**
+  * @brief This function handles USART2 global interrupt / USART2 wake-up interrupt through EXTI line 26.
+  */
+void USART2_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART2_IRQn 0 */
+
+  /* USER CODE END USART2_IRQn 0 */
+  HAL_UART_IRQHandler(&huart2);
+  /* USER CODE BEGIN USART2_IRQn 1 */
+
+  /* USER CODE END USART2_IRQn 1 */
+}
+
 /* USER CODE BEGIN 1 */
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+  #if 0
   uint16_t num = 0;
 
   if ( (num = Q_NumContents(&USB_TX_Q)) > 0 )
@@ -301,10 +318,34 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     TIM1_CNT_1++;
     TIM1_CNT_2++;
     TIM1_CNT_3++;
+
+    // MBI_Timer1ms();
   }
+  #else
+  // uint16_t num = 0;
+
+  // if ( (num = Q_NumContents(&USB_TX_Q)) > 0 )
+  // {
+  //   if (CDC_Transmit_Is_Busy() != USBD_BUSY)
+  //   {
+  //     queDataNum += num;
+
+  //     Q_Read(&USB_TX_Q, (uint8_t *)queData, num);
+
+  //     CDC_Transmit_FS(queData, num);
+  //   }
+  // }
+
+  if (htim->Instance == TIM1)
+  {
+    TIM1_CNT_1++;
+    TIM1_CNT_2++;
+    TIM1_CNT_3++;
+
+    // MBI_Timer1ms();
+  }
+  #endif
 }
-
-
 
 void UART1_RxEnable (void)
 {
@@ -318,15 +359,30 @@ void UART1_RxEnable (void)
     __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
 }
 
+void UART2_RxEnable (void)
+{
+    __HAL_DMA_DISABLE(&hdma_usart2_rx);
+    hdma_usart2_rx.Instance->CNDTR = UART_RX_IDLE_BUFSIZE;
+    __HAL_DMA_ENABLE(&hdma_usart2_rx);
+
+    __HAL_UART_GET_FLAG(&huart2, UART_FLAG_IDLE);
+    ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_IDLEIE);
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t *) uart2_rx_IDLE_buf, UART_RX_IDLE_BUFSIZE);
+    __HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
+}
+
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
+  uint8_t Uart2_Rx_MB_Size = 0;
+
   uart_rx_IDLE_TotalCnt += Size;
   
   if (huart->Instance == USART1)
   {
     RxIdle_Flag = 1;
     
-    if (uart_rx_IDLE_TotalCnt >= 3)
+    // if (uart_rx_IDLE_TotalCnt >= 3)
+    if (uart_rx_IDLE_TotalCnt >= 2)
     {
       
       // DEBUG_GPIO_TOGGLE;
@@ -350,40 +406,12 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     }
     
     UART1_RxEnable();
-    // __HAL_DMA_DISABLE(&hdma_usart1_rx);
-    // hdma_usart1_rx.Instance->CNDTR = UART_RX_IDLE_BUFSIZE;
-    // __HAL_DMA_ENABLE(&hdma_usart1_rx);
-
-    // __HAL_UART_GET_FLAG(huart, UART_FLAG_IDLE);
-    // ATOMIC_SET_BIT(huart->Instance->CR1, USART_CR1_IDLEIE);
-    // HAL_UARTEx_ReceiveToIdle_DMA(&huart1, (uint8_t *) uart1_rx_IDLE_buf, UART_RX_IDLE_BUFSIZE);
-    // __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
-    // if (IOL_Rx_IDLEFlag == 1)
-    // {
-    //   DEBUG_GPIO_TOGGLE;
-    //   IOL_Rx_IDLEFlag = 0;
-    // }
-    // else if((IOL_Rx_IDLEFlag == 0) && (uart_rx_IDLE_TotalCnt >= 3))
-    // {
-    //   DEBUG_GPIO_TOGGLE;
-    //   IOL_Rx_IDLEFlag = 1;
-    //   IOL_PageTest(Size);
-    // }
-
-    // __HAL_DMA_DISABLE(&hdma_usart1_rx);
-    // hdma_usart1_rx.Instance->CNDTR = UART_RX_IDLE_BUFSIZE;
-    // __HAL_DMA_ENABLE(&hdma_usart1_rx);
-
-    // __HAL_UART_GET_FLAG(huart, UART_FLAG_IDLE);
-    // ATOMIC_SET_BIT(huart->Instance->CR1, USART_CR1_IDLEIE);
-    // HAL_UARTEx_ReceiveToIdle_DMA(&huart1, (uint8_t *) uart1_rx_IDLE_buf, UART_RX_IDLE_BUFSIZE);
-    // __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
-    // mseq_upload_master(Size);
-    // HAL_UART_DMAResume(&huart1);
-
-    // HAL_NVIC_EnableIRQ(USART1_IRQn);
-    // HAL_UART_DMAResume(&huart1);
-
+  }
+  else if (huart->Instance == USART2)
+  {
+    Uart2_Rx_MB_Size = (uint8_t) Size;
+    MBI_UartRx(uart2_rx_IDLE_buf, Uart2_Rx_MB_Size);
+    UART2_RxEnable();
   }
 }
 

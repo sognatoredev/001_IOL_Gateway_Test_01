@@ -28,7 +28,7 @@ extern "C" {
 #include <stdint.h>
 
 #include "queue.h"
-#include "usb_device.h"
+// #include "usb_device.h"
 
 // #include "usbd_def.h"
 // #include "queue.h"
@@ -119,10 +119,13 @@ extern Q_queue_t USB_TX_Q;
 #define UART_RX_IDLE_BUFSIZE        100
 
 extern DMA_HandleTypeDef hdma_usart1_rx;
+extern DMA_HandleTypeDef hdma_usart2_rx;
+
 extern uint32_t uart_rx_IDLE_TotalCnt;
 extern uint16_t iol_processdata_cnt;
 extern uint8_t IOL_OP_OD_Page_Res_cnt;
 extern uint8_t uart1_rx_IDLE_buf[];
+extern uint8_t uart2_rx_IDLE_buf[];
 extern uint8_t TestValue[];
 
 extern uint8_t UserButton_Flag;

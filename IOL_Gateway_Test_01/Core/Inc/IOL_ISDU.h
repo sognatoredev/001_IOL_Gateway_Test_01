@@ -35,6 +35,7 @@ extern "C" {
 #define IOL_OP_ISDU_VENDORNAME_LENGTH                       34
 #define IOL_OP_ISDU_HWREVISION_LENGTH                       34
 #define IOL_OP_ISDU_FWREVISION_LENGTH                       34
+#define IOL_OP_ISDU_MODBUSLIMITSPEED_LENGTH                 2
 
 #define IOL_OP_ISDU_IN_PROCESSDATALENGTH          (IOL_OP_ISDU_OD_LENGTH + IOL_OP_ISDU_PD_LENGTH + IOL_OP_ISDU_CKS_LENGTH)
 #define IOL_OP_ISDU_OUT_PROCESSDATALENGTH         (IOL_OP_ISDU_PD_LENGTH + IOL_OP_ISDU_CKS_LENGTH)
@@ -85,8 +86,18 @@ typedef struct IOL_ISDUPacket
     uint8_t isdu_od_rxcplt;
     uint8_t isdu_od_writereq_flag;
     uint8_t isdu_od_writeReq8bit_flag;
+    uint8_t isdu_od_readReq8bit_flag;
     
 } IOL_ISDUPacket_t;
+
+typedef struct IOL_ISDU_ParameterValue
+{
+    uint16_t ParameterValue_ModbusLimitSpeed;
+    uint16_t ParameterValue_ModbusActualPos;
+    uint16_t ParameterValue_ModbusEventActivate;
+    
+} IOL_ISDU_ParameterValue_t;
+
 
 // Index Look Up Table
 typedef enum 
@@ -121,7 +132,15 @@ typedef enum
     IOL_Index_ProcessDataInput = 40,    // 0x28
     IOL_Index_ProcessDataOutput,         // 0x29
 
-    IOL_Index_PreferredIndex = 64       //0x40
+    IOL_Index_PreferredIndex = 64,       //0x40
+
+    IOL_Index_ModbusLimitSpeed = 74,   // 0x0108
+    IOL_Index_ModbusActualPos = 76,    // 0x010A
+    IOL_Index_ModbusEventActivate = 254,// 0x0290
+
+    // IOL_Index_ModbusLimitSpeed = 264,   // 0x0108
+    // IOL_Index_ModbusActualPos = 266,    // 0x010A
+    // IOL_Index_ModbusEventActivate = 656,// 0x0290
 } IOL_IndexTable;
 
 typedef enum
@@ -160,6 +179,7 @@ typedef enum
 extern IOL_IndexTable IOL_indextable;
 extern uint8_t IOL_Get_ISDU_WR_ODArr (uint8_t * pData);
 extern void IOL_Clear_PDBuffer (void);
+extern void IOL_ParameterValue_Init(void);
 /* USER CODE BEGIN Prototypes */
 
 #ifdef __cplusplus
